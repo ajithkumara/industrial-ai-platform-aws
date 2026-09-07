@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+# Milestone 1 collects only the cloud-free domain-core tests. Transport tests
+# (Kinesis consumer, S3 client) arrive in Milestone 2.
+addopts = "-ra"

@@ -1,0 +1,111 @@
+# Config-driven asset-type mapping for "bearing_inference" telemetry --
+# the EDGE model's verdict on a bearing event.
+#
+# Source: adaptive-edge-orchestrator's inference_engine.py, bridged onto
+# Event Hub by edge/nats_bearing_bridge.py (NATS subject: see
+# NATS_BEARING_INFERENCE_SUBJECT -- UNVERIFIED GUESS, default
+# "inference.bearing", not confirmed against the real repo). Edge
+# inference results, tagged with the orchestrator's active policy mode
+# (CLOUD_OPTIMISED / EDGE_ONLY / HYBRID / EDGE_AUTONOMOUS) -- this is
+# the field the thesis's F1/latency/edge-autonomy comparison depends on.
+#
+# Consumed generically by dlt/silver/flatten_payloads.py — adding a new
+# asset type requires ONLY a new file here (plus compatible telemetry
+# payloads). No Python changes should be required.
+#
+# NOTE: this config was written from pasted payload examples, not the
+# real adaptive-edge-orchestrator source. Field names/types below should
+# be verified once that repo is available.
+#
+# 2026-08 REVISION (per architecture review + supervisor-locked design):
+#   - `label` renamed to `ground_truth_label`. The dataset ground-truth
+#     fault class and the edge model's own prediction (anomaly/
+#     anomaly_score) were previously sitting in adjacent, easily-confused
+#     columns with no naming distinction -- a real research-integrity
+#     risk for F1/precision/recall evidence. Source path is unchanged
+#     (payload.label); only the Silver column name changes.
+#   - Added optional forward-looking fields (edge_confidence,
+#     model_version, policy_version, calibration_tag, cloud_reachable,
+#     latency_ms, cpu_pct). The real orchestrator payload may not emit
+#     these yet -- dlt/silver/flatten_payloads.py's schema-aware null
+#     fallback means they simply land as NULL until it does, so this
+#     config can ship ahead of the orchestrator without breaking the
+#     pipeline (deliberate schema-evolution design, not a bug).
+#   - `event_id` on this record is the escalation correlation key used
+#     by config/asset_types/cloud_validation.yml's `source_event_id`.
+
+asset_type: bearing_inference
+silver_table: silver_bearing_inference_results
+primary_key: [event_id]
+deduplicate: true
+
+fields:
+  - source: payload.seq
+    target: seq
+    type: integer
+
+  - source: payload.label
+    target: ground_truth_label
+    type: string
+
+  - source: payload.anomaly
+    target: anomaly
+    type: boolean
+
+  - source: payload.anomaly_score
+    target: anomaly_score
+    type: double
+
+  - source: payload.infer_ms
+    target: infer_ms
+    type: double
+
+  - source: payload.mode
+    target: mode
+    type: string
+
+  - source: payload.stats.total
+    target: stats_total
+    type: integer
+
+  - source: payload.stats.anomalies
+    target: stats_anomalies
+    type: integer
+
+  - source: payload.stats.accuracy
+    target: stats_accuracy
+    type: double
+
+  - source: payload.stats.elapsed_s
+    target: stats_elapsed_s
+    type: double
+
+  # -- forward-looking / optional (null until the orchestrator emits them) --
+
+  - source: payload.confidence
+    target: edge_confidence
+    type: double
+
+  - source: payload.model_version
+    target: model_version
+    type: string
+
+  - source: payload.policy_version
+    target: policy_version
+    type: string
+
+  - source: payload.calibration_tag
+    target: calibration_tag
+    type: string
+
+  - source: payload.cloud_reachable
+    target: cloud_reachable
+    type: boolean
+
+  - source: payload.latency_ms
+    target: latency_ms
+    type: double
+
+  - source: payload.cpu_pct
+    target: cpu_pct
+    type: double

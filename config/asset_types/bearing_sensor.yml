@@ -1,0 +1,116 @@
+# Config-driven asset-type mapping for "bearing_sensor" telemetry.
+#
+# Source: adaptive-edge-orchestrator's sensor_replay.py, bridged onto
+# Event Hub by edge/nats_bearing_bridge.py (NATS subject: see
+# NATS_BEARING_SENSOR_SUBJECT, default "sensors.bearing"). Raw bearing
+# vibration telemetry with CWRU-dataset fault-classification features.
+#
+# Consumed generically by dlt/silver/flatten_payloads.py — adding a new
+# asset type requires ONLY a new file here (plus compatible telemetry
+# payloads). No Python changes should be required.
+#
+# NOTE: this config was written from pasted payload examples, not the
+# real adaptive-edge-orchestrator source. Field names/types below should
+# be verified once that repo is available.
+
+asset_type: bearing_sensor
+silver_table: silver_bearing_sensor_telemetry
+primary_key: [event_id]
+deduplicate: true
+
+fields:
+  - source: payload.seq
+    target: seq
+    type: integer
+
+  - source: payload.file
+    target: source_file
+    type: string
+
+  # Renamed from `label` (2026-08) for the same reason as
+  # bearing_inference.yml: this is the DATASET GROUND TRUTH fault class from
+  # the CWRU recording, not a model output. Keeping it named `label`
+  # alongside model predictions invites exactly the confusion that makes F1
+  # evidence indefensible. Source path is unchanged.
+  - source: payload.label
+    target: ground_truth_label
+    type: string
+
+  - source: payload.window_idx
+    target: window_idx
+    type: integer
+
+  - source: payload.features.rms
+    target: rms
+    type: double
+
+  - source: payload.features.peak
+    target: peak
+    type: double
+
+  - source: payload.features.crest
+    target: crest
+    type: double
+
+  - source: payload.features.kurtosis
+    target: kurtosis
+    type: double
+
+  - source: payload.features.skew
+    target: skew
+    type: double
+
+  - source: payload.features.variance
+    target: variance
+    type: double
+
+  - source: payload.features.mean_abs
+    target: mean_abs
+    type: double
+
+  # -- escalation payload (2026-08) --------------------------------------
+  # Sampling rate is REQUIRED to interpret any spectral feature derived
+  # cloud-side: FFT bin index -> frequency depends on it, so without this
+  # column the spectral features in gold.bearing_ml_features would be
+  # uninterpretable and non-comparable across recordings. Emitted on every
+  # event (it is a property of the sensor, not of the escalation), so it
+  # remains available even when no waveform is attached.
+  - source: payload.sampling_rate_hz
+    target: sampling_rate_hz
+    type: integer
+
+  # -- dataset provenance (2026-08) ---------------------------------------
+  # Mandatory safeguard before any real-data ingestion run: without an
+  # explicit run identifier carried on every event, a real CWRU batch
+  # lands in the exact same Bronze/Silver/Gold tables as the synthetic
+  # acceptance-test data already sitting there, with no column to tell
+  # them apart after the fact. NULLABLE (not in REQUIRED_NON_NULL in
+  # ml/feature_spec.py) rather than required, so the already-frozen
+  # synthetic acceptance run (git tag cloud-platform-accepted-v1, which
+  # never set this field) is not retroactively invalidated -- synthetic
+  # rows simply read dataset_run_id IS NULL. Every real-data loader
+  # (ml/cwru_loader.py) must set this on every event it builds.
+  - source: payload.dataset_run_id
+    target: dataset_run_id
+    type: string
+
+  # NOTE ON THE RAW WAVEFORM. The waveform itself is deliberately NOT
+  # flattened into a Silver column here. It is an array of raw samples,
+  # only present on HYBRID-escalated events, and materialising it as a
+  # column would (a) require array support in
+  # dlt/common/helpers.py's SPARK_TYPE_MAP, and (b) widen every row of
+  # silver_bearing_sensor_telemetry for the minority of rows that carry
+  # one. It remains fully available to the cloud spectral-feature job at
+  # `payload.waveform` on
+  # industrial_ai.silver.cleaned_telemetry_events, which is where FFT
+  # features are computed. Bronze retains it verbatim either way.
+  #
+  # ARCHITECTURAL INTENT (edge-push on escalation): the edge attaches the
+  # raw window at escalation time on the existing one-way path. There is
+  # no cloud->edge request channel and no edge-side waveform retention
+  # buffer, so the invariant that the cloud is never a synchronous
+  # prerequisite for a live edge decision is preserved. Payload richness
+  # is an OUTPUT of the orchestration policy, which makes the resulting
+  # bandwidth difference a measured consequence of orchestration rather
+  # than a fixed transport cost -- see tests/integration/payload_sizing.py
+  # and gold.cloud_egress.

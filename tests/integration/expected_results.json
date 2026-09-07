@@ -1,0 +1,234 @@
+{
+  "A": {
+    "scenario": "A_normal_operation",
+    "n_bearing_sensor_events": 10,
+    "n_bearing_inference_events": 10,
+    "detection_performance": {
+      "mode": "CLOUD_OPTIMISED",
+      "n_events": 10,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 10,
+      "precision": null,
+      "recall": null
+    }
+  },
+  "B": {
+    "scenario": "B_edge_uncertain_hybrid",
+    "n_escalations": 6,
+    "inference_event_ids": [
+      "7213dc1c-6838-568a-a287-cbf376687ef9",
+      "07c769c0-5ab8-5c47-abac-7f63cff5d31e",
+      "63f8b6a1-d2ab-580b-928b-4d1bc1c6fc0d",
+      "e14ae4fe-1f90-532e-be3f-c4c3d617929f",
+      "4c79e1a9-bc24-578e-9e13-b6123c566416",
+      "6278b08f-67ec-5aa0-b051-00ce79bdaddc"
+    ],
+    "escalation_efficacy": {
+      "mode": "HYBRID",
+      "edge_confidence_bucket": "low",
+      "n_escalations": 6,
+      "agreement_rate": 0.5,
+      "edge_accuracy": 0.5,
+      "cloud_accuracy": 1.0,
+      "cloud_accuracy_improvement": 0.5
+    }
+  },
+  "C": {
+    "scenario": "C_edge_only",
+    "n_mode_transitions": 1,
+    "expected_trigger": "cpu",
+    "expected_from_to": [
+      "CLOUD_OPTIMISED",
+      "EDGE_ONLY"
+    ],
+    "n_inference_events_during_window": 5
+  },
+  "D": {
+    "scenario": "D_autonomous",
+    "expected_mode": "EDGE_AUTONOMOUS",
+    "n_events_during_outage": 8,
+    "n_anomalies_during_outage": 1,
+    "expected_gap_s": 2.0,
+    "outage_duration_s": 14.0
+  },
+  "E": {
+    "scenario": "E_recovery",
+    "n_mode_transitions": 2,
+    "expected_sequence": [
+      [
+        "EDGE_AUTONOMOUS",
+        "HYBRID"
+      ],
+      [
+        "HYBRID",
+        "CLOUD_OPTIMISED"
+      ]
+    ],
+    "expected_trigger": "recovery"
+  },
+  "F": {
+    "scenario": "F_confusion_matrix",
+    "n_events": 100,
+    "detection_performance": {
+      "mode": "CLOUD_OPTIMISED",
+      "model_version": "edge-v1.0-synthetic",
+      "tp": 80,
+      "fp": 5,
+      "fn": 10,
+      "tn": 5,
+      "precision": 0.9411764705882353,
+      "recall": 0.8888888888888888,
+      "f1": 0.9142857142857143
+    }
+  },
+  "DQ1": {
+    "scenario": "DQ1_valid_control",
+    "event_ids": [
+      "322775d6-b557-52f7-8df1-aa66f9503991"
+    ],
+    "expected_gate": null,
+    "in_dlq": false,
+    "bronze_rows": 1,
+    "cleaned_rows": 1,
+    "flattened_rows": 1,
+    "note": "Control. If this fails, the pipeline is broken, not the input."
+  },
+  "DQ2": {
+    "scenario": "DQ2_duplicate_event",
+    "event_ids": [
+      "230a958b-71ed-5055-8255-28db9e655dbb"
+    ],
+    "expected_gate": null,
+    "in_dlq": false,
+    "bronze_rows": 2,
+    "cleaned_rows": 1,
+    "flattened_rows": 1,
+    "note": "Proves Bronze immutability AND Silver dedup in one scenario."
+  },
+  "DQ3": {
+    "scenario": "DQ3_missing_envelope_field",
+    "event_ids": [
+      "b8b47bb8-2dbb-5d16-91ad-18d0a006d07c"
+    ],
+    "expected_gate": "GATE 1 (consumer Pydantic \u2014 missing event_id)",
+    "in_dlq": true,
+    "bronze_rows": 0,
+    "cleaned_rows": 0,
+    "flattened_rows": 0
+  },
+  "DQ4": {
+    "scenario": "DQ4_extra_envelope_field",
+    "event_ids": [
+      "276ae5a2-ec57-539e-a961-da1662c8c714"
+    ],
+    "expected_gate": "GATE 1 (consumer Pydantic \u2014 extra='forbid')",
+    "in_dlq": true,
+    "bronze_rows": 0,
+    "cleaned_rows": 0,
+    "flattened_rows": 0,
+    "note": "Confirms the envelope is a closed contract. If this lands in Bronze, extra='forbid' has been weakened and schema drift can enter the platform silently."
+  },
+  "DQ5": {
+    "scenario": "DQ5_wrong_envelope_type",
+    "event_ids": [
+      "5f7cab61-a1e5-5adf-a8bd-4210dad904fa"
+    ],
+    "expected_gate": "GATE 1 (consumer Pydantic \u2014 payload must be a mapping)",
+    "in_dlq": true,
+    "bronze_rows": 0,
+    "cleaned_rows": 0,
+    "flattened_rows": 0
+  },
+  "DQ6": {
+    "scenario": "DQ6_empty_event_id",
+    "event_ids": [
+      ""
+    ],
+    "expected_gate": "GATE 1 (consumer Pydantic \u2014 min_length=1 on event_id)",
+    "in_dlq": true,
+    "bronze_rows": 0,
+    "cleaned_rows": 0,
+    "flattened_rows": 0,
+    "note": "REGRESSION GUARD for a defect this suite found and that has since been fixed. Previously an empty string was a valid `str` to Pydantic (gate 1 passed) and was NOT NULL to Spark (gate 2 passed), so the event reached Silver with a meaningless primary key shared by every such event \u2014 causing dedup-by-event_id to collapse unrelated events into one row. Fixed with defence in depth: min_length=1 on the identity fields of shared/telemetry_event.py (rejects at the consumer, so it never reaches Bronze), plus TRIM(event_id) <> '' in the Silver expectations of dlt/silver/clean_and_deduplicate.py (catches anything reaching Bronze by another route such as backfill or replay)."
+  },
+  "DQ7": {
+    "scenario": "DQ7_unparseable_timestamp",
+    "event_ids": [
+      "f7de2375-81a1-56be-8911-585e6d827164"
+    ],
+    "expected_gate": "GATE 2 (to_timestamp -> NULL, expect_or_drop valid_timestamp)",
+    "in_dlq": false,
+    "bronze_rows": 1,
+    "cleaned_rows": 0,
+    "flattened_rows": 0,
+    "note": "Demonstrates the layered design working as intended: Bronze retains the raw evidence for audit, Silver refuses to publish it as canonical."
+  },
+  "DQ8": {
+    "scenario": "DQ8_unknown_asset_type",
+    "event_ids": [
+      "da0722fd-0705-5060-b73e-cb03567351ad"
+    ],
+    "expected_gate": "GATE 3 (no config/asset_types/mystery_sensor.yml)",
+    "in_dlq": false,
+    "bronze_rows": 1,
+    "cleaned_rows": 1,
+    "flattened_rows": 0,
+    "note": "Proves an unmodelled domain degrades gracefully: the event is retained and queryable in the generic Silver table, it simply produces no domain-specific table. It must NOT fail the pipeline update."
+  },
+  "DQ9": {
+    "scenario": "DQ9_missing_payload_field",
+    "event_ids": [
+      "8b7b5f25-c927-5e71-87cc-10c0407fde16"
+    ],
+    "expected_gate": "GATE 3 (schema-aware fallback -> NULL rms)",
+    "in_dlq": false,
+    "bronze_rows": 1,
+    "cleaned_rows": 1,
+    "flattened_rows": 1,
+    "expect_null_columns": [
+      "rms"
+    ],
+    "note": "Partial data is preserved rather than discarded. Directly relevant to ML readiness: gold.bearing_ml_features must exclude or impute such rows explicitly, not inherit NULLs silently into training."
+  },
+  "DQ10": {
+    "scenario": "DQ10_wrong_payload_type",
+    "event_ids": [
+      "b6014419-0b75-54b2-a91f-b6452176421b"
+    ],
+    "expected_gate": "GATE 3 (cast failure -> NULL kurtosis)",
+    "in_dlq": false,
+    "bronze_rows": 1,
+    "cleaned_rows": 1,
+    "flattened_rows": 1,
+    "expect_null_columns": [
+      "kurtosis"
+    ],
+    "note": "Spark's cast() yields NULL rather than raising, so a type error is indistinguishable from a missing value downstream. This is the single strongest argument for the ML feature table applying an explicit NOT NULL contract on every feature column rather than trusting Silver."
+  },
+  "DQ11": {
+    "scenario": "DQ11_late_event",
+    "event_ids": [
+      "85f4a9aa-d928-52ed-9ca9-ee8d67811731"
+    ],
+    "expected_gate": null,
+    "in_dlq": false,
+    "bronze_rows": 1,
+    "cleaned_rows": 1,
+    "flattened_rows": 1,
+    "note": "Accepted by design. The platform distinguishes event time (payload timestamp) from ingestion time (_ingested_at), which is what makes buffered-then-replayed events from an EDGE_AUTONOMOUS window correct rather than anomalous. Confirm the row lands in the ADLS partition of its INGESTION date while retaining its original event timestamp."
+  },
+  "cloudforest_smoke": {
+    "scenario": "cloudforest_smoke",
+    "n_pending_escalations": 5,
+    "inference_event_ids": [
+      "cd974f47-ea2b-5572-8dd9-752dfa7d40a7",
+      "a351aef3-59ae-575f-975e-e43fcee4613f",
+      "8b22861e-caea-5deb-8c75-91695da6cf37",
+      "e6e9968f-9cb1-5e30-9168-753408e344b2",
+      "9d51eff7-d015-5f07-86e1-7ead9aeccc71"
+    ],
+    "note": "Structural-only: after ml/cloud_forest/score_escalations.py runs, expect exactly one silver_cloud_validation_results row per inference_event_id above, with cloud_score in [0,1] and cloud_model_version starting with 'cloud_forest_bearing-v'. Exact cloud_anomaly/agrees_with_edge values are NOT asserted here -- they depend on the real trained model."
+  }
+}

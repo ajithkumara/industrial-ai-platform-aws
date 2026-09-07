@@ -1,0 +1,47 @@
+# Config-driven asset-type mapping for "context_snapshot" telemetry --
+# the Context Monitor's periodic RTT/CPU/RAM/reachability samples.
+#
+# Source: adaptive-edge-orchestrator's Context Monitor, published to NATS
+# subject "context.snapshot" at ~1Hz (per Architecture v1.0 Section 3.3).
+# 1Hz raw is noise for the cloud archive and needlessly increases Event
+# Hub/storage cost -- edge/nats_bearing_bridge.py's NatsBearingBridge
+# does NOT forward every sample. It forwards only breach samples (the
+# ones that actually contributed to a hysteresis count) plus a
+# heartbeat sample roughly every 30s, so the archive still proves
+# continuous monitoring without ingesting the full 1Hz stream. See
+# NatsBearingBridge._on_context_message for the sampling logic.
+#
+# NATS subject name is UNVERIFIED against the real repo -- see
+# edge/nats_bearing_bridge.py module docstring.
+#
+# Consumed generically by dlt/silver/flatten_payloads.py — adding a new
+# asset type requires ONLY a new file here. No Python changes required.
+
+asset_type: context_snapshot
+silver_table: silver_context_snapshot
+primary_key: [event_id]
+deduplicate: true
+
+fields:
+  - source: payload.rtt_ms
+    target: rtt_ms
+    type: double
+
+  - source: payload.cpu_pct
+    target: cpu_pct
+    type: double
+
+  - source: payload.ram_pct
+    target: ram_pct
+    type: double
+
+  - source: payload.cloud_reachable
+    target: cloud_reachable
+    type: boolean
+
+  # true only for samples forwarded because they breached a threshold
+  # (as opposed to a periodic heartbeat sample) -- lets Gold distinguish
+  # "this is why we switched" evidence from background continuity proof.
+  - source: payload.is_breach_sample
+    target: is_breach_sample
+    type: boolean

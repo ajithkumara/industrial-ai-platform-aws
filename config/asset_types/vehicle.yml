@@ -1,0 +1,62 @@
+# Config-driven asset-type mapping for "vehicle" telemetry.
+#
+# Consumed generically by dlt/silver/flatten_payloads.py — adding a new
+# asset type requires ONLY a new file here (plus compatible telemetry
+# payloads). No Python changes should be required.
+#
+# `source` fields are dotted paths rooted at the Silver envelope record
+# (e.g. "payload.speed_kmh" reaches record["payload"]["speed_kmh"]).
+#
+# NOTE: field names below match the payload keys actually emitted by
+# edge/vehicle_producer.py (VehicleTelemetryGenerator), which uses
+# snake_case keys (e.g. "speed_kmh", not "speedKmh").
+
+asset_type: vehicle
+silver_table: silver_vehicle_telemetry
+primary_key: [event_id]
+deduplicate: true
+
+fields:
+  - source: payload.vehicle_id
+    target: vehicle_id
+    type: string
+
+  - source: payload.driver_id
+    target: driver_id
+    type: string
+
+  - source: payload.speed_kmh
+    target: speed_kmh
+    type: integer
+
+  - source: payload.heading
+    target: heading
+    type: integer
+
+  - source: payload.fuel_level_percent
+    target: fuel_level_percent
+    type: integer
+
+  - source: payload.engine_temperature_c
+    target: engine_temperature_c
+    type: double
+
+  - source: payload.battery_voltage
+    target: battery_voltage
+    type: double
+
+  - source: payload.odometer_km
+    target: odometer_km
+    type: double
+
+  - source: payload.ignition
+    target: ignition
+    type: boolean
+
+  - source: payload.location.latitude
+    target: latitude
+    type: double
+
+  - source: payload.location.longitude
+    target: longitude
+    type: double

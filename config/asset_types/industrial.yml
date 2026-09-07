@@ -1,0 +1,26 @@
+# Config-driven asset-type mapping for "industrial" telemetry.
+#
+# PLACEHOLDER: edge/industrial_producer.py is currently a stub (no payload
+# generation implemented yet), so the concrete industrial sensor field
+# mapping below is intentionally left empty rather than guessed.
+#
+# This file is still structurally valid (asset_type / silver_table / fields)
+# so the generic Silver flattener can load it without error; it simply
+# produces a Silver table with no flattened columns beyond the envelope
+# metadata until real industrial payload fields are defined here.
+#
+# ACTION REQUIRED (not made automatically — needs domain input): populate
+# `fields` once the industrial payload contract is defined, e.g.:
+#   - source: payload.machine_id
+#     target: machine_id
+#     type: string
+#   - source: payload.vibration_mm_s
+#     target: vibration_mm_s
+#     type: double
+
+asset_type: industrial
+silver_table: silver_industrial_telemetry
+primary_key: [event_id]
+deduplicate: true
+
+fields: []

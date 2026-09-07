@@ -1,0 +1,61 @@
+# Config-driven asset-type mapping for "orchestrator_mode" telemetry --
+# every mode transition made by the Policy Executor.
+#
+# This is the single highest-value event type for the thesis: your own
+# architecture doc calls mode history "the primary evidence for the
+# thesis evaluation." It is low-volume (one record per transition, not
+# per-sample), so bridging it costs almost nothing.
+#
+# Source: adaptive-edge-orchestrator's Policy Executor, published to NATS
+# subject "orchestrator.mode" (per Architecture v1.0 Section 3.3 topic
+# table). Bridged onto Event Hub by edge/nats_bearing_bridge.py via
+# translate_mode_transition_record(). NATS subject name is UNVERIFIED
+# against the real repo -- see edge/nats_bearing_bridge.py module
+# docstring.
+#
+# `trigger` is the most important column here: it is direct evidence
+# that mode switching is driven by live context (network / cpu /
+# confidence / severity) rather than fixed at design time -- this is
+# claim C1/C2 from the verified research gap in one field.
+#
+# Consumed generically by dlt/silver/flatten_payloads.py — adding a new
+# asset type requires ONLY a new file here. No Python changes required.
+
+asset_type: orchestrator_mode
+silver_table: silver_orchestrator_mode
+primary_key: [event_id]
+deduplicate: true
+
+fields:
+  - source: payload.from_mode
+    target: from_mode
+    type: string
+
+  - source: payload.to_mode
+    target: to_mode
+    type: string
+
+  # network | cpu | confidence | severity | recovery
+  - source: payload.trigger
+    target: trigger
+    type: string
+
+  - source: payload.rtt_ms
+    target: rtt_ms
+    type: double
+
+  - source: payload.cpu_pct
+    target: cpu_pct
+    type: double
+
+  - source: payload.edge_confidence
+    target: edge_confidence
+    type: double
+
+  - source: payload.breach_count
+    target: breach_count
+    type: integer
+
+  - source: payload.policy_version
+    target: policy_version
+    type: string

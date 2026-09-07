@@ -1,0 +1,84 @@
+# Config-driven asset-type mapping for "cloud_validation" telemetry --
+# CloudForest's asynchronous second opinion on a HYBRID-mode escalation.
+#
+# UNLIKE the other bearing_* asset types, this event does NOT originate
+# at the edge and is NOT bridged from NATS. It is produced cloud-side,
+# by the triggered CloudForest scoring job (see dlt/gold/ and the
+# CloudForest job implementation) that consumes newly-landed
+# silver_bearing_inference_results rows flagged for escalation, re-scores
+# them with the heavier cloud model, and emits one of these records per
+# escalation. It is written into the same generic TelemetryEvent-shaped
+# JSON landing path as everything else, so it flows through the same
+# Bronze Auto Loader / Silver dedup / config-driven flatten machinery
+# with zero special-casing.
+#
+# Architectural note (locked 2026-08): CloudForest is one possible
+# implementation of the cloud validation function, not the definition of
+# it. HYBRID mode means "edge makes the operational decision, cloud
+# performs secondary validation/enrichment" -- the specific cloud model
+# (CloudForest today; could be an autoencoder or ensemble tomorrow) is
+# an implementation detail behind this same event contract. The edge
+# decision is never blocked or overridden by this record; it is written
+# after the fact, purely for research/enrichment purposes.
+#
+# `source_event_id` is the correlation key back to the
+# silver_bearing_inference_results row (its `event_id`) that triggered
+# this escalation -- this is what makes gold.escalation_efficacy
+# possible.
+#
+# Consumed generically by dlt/silver/flatten_payloads.py — adding a new
+# asset type requires ONLY a new file here. No Python changes required.
+
+asset_type: cloud_validation
+silver_table: silver_cloud_validation_results
+primary_key: [event_id]
+deduplicate: true
+
+fields:
+  - source: payload.source_event_id
+    target: source_event_id
+    type: string
+
+  - source: payload.edge_anomaly
+    target: edge_anomaly
+    type: boolean
+
+  - source: payload.edge_score
+    target: edge_score
+    type: double
+
+  - source: payload.edge_confidence
+    target: edge_confidence
+    type: double
+
+  - source: payload.cloud_anomaly
+    target: cloud_anomaly
+    type: boolean
+
+  - source: payload.cloud_score
+    target: cloud_score
+    type: double
+
+  - source: payload.cloud_decision
+    target: cloud_decision
+    type: string
+
+  - source: payload.agrees_with_edge
+    target: agrees_with_edge
+    type: boolean
+
+  - source: payload.edge_model_version
+    target: edge_model_version
+    type: string
+
+  - source: payload.cloud_model_version
+    target: cloud_model_version
+    type: string
+
+  - source: payload.validation_latency_ms
+    target: validation_latency_ms
+    type: double
+
+  - source: payload.mode
+    target: mode
+    type: string

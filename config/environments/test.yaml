@@ -1,0 +1,12 @@
+# Config-as-code for the test environment (AWS), consumed by
+# shared/config.load_config. Account-specific values (s3_bucket,
+# databricks_host, kinesis_stream) are OUTPUTS of Terraform — populate from
+# `terraform output` after apply rather than hardcoding, so this file stays
+# valid across AWS accounts. catalog_name is the fixed Unity Catalog name
+# ("industrial_ai"), identical to the Azure reference.
+environment: "test"
+aws_region: "ca-central-1"
+s3_bucket: "REPLACE_WITH_TERRAFORM_OUTPUT_s3_bucket"
+kinesis_stream: "telemetryhub"
+databricks_host: "REPLACE_WITH_TERRAFORM_OUTPUT_databricks_host"
+catalog_name: "industrial_ai"

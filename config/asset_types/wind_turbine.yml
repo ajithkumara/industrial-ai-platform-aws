@@ -1,0 +1,39 @@
+# Config-driven asset-type mapping for "wind_turbine" telemetry.
+#
+# This file exists to PROVE the config-driven architecture: adding a new
+# asset type requires only a YAML file like this one, plus telemetry
+# payloads that conform to the Generic Envelope
+# (event_id/device_id/asset_type/timestamp/priority/schema_version/payload).
+# No changes to dlt/silver/flatten_payloads.py are required.
+#
+# There is no wind_turbine edge producer in this repository yet — the field
+# names below are a synthetic, illustrative example (rotor speed, wind
+# speed, power output, blade pitch, nacelle temperature) used by
+# tests/test_config_driven_flattening.py to validate that the generic
+# flattener works for a brand-new, previously-unseen asset type.
+
+asset_type: wind_turbine
+silver_table: silver_wind_turbine_telemetry
+primary_key: [event_id]
+deduplicate: true
+
+fields:
+  - source: payload.rotor_rpm
+    target: rotor_rpm
+    type: double
+
+  - source: payload.wind_speed_mps
+    target: wind_speed_mps
+    type: double
+
+  - source: payload.power_output_kw
+    target: power_output_kw
+    type: double
+
+  - source: payload.blade_pitch_deg
+    target: blade_pitch_deg
+    type: double
+
+  - source: payload.nacelle_temperature_c
+    target: nacelle_temperature_c
+    type: double
