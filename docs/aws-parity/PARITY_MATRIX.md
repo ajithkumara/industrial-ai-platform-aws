@@ -25,12 +25,12 @@
 | Domain core | CWRU loader | ml/cwru_loader.py | same (verbatim) | **VERIF/PARTIAL** (M1; data-dependent tests skip) | TEST_EVIDENCE §M1 |
 | Domain core | DQ scenarios (three gates) | tests/integration/data_quality_scenarios.py | same (translate import cloud-free) | **VERIF** (M1) | TEST_EVIDENCE §M1 |
 | Domain core | Settings model (lazy validation) | config/settings.py (Azure) | config/settings.py (Kinesis/S3, no boto3) | **IMPL→VERIF** (M1) | TEST_EVIDENCE §M1 |
-| **Ingestion** | Streaming bus | Event Hubs | Kinesis Data Streams | **NYI** (M2) | — |
-| Ingestion | Consumer receive→validate→buffer | eventhub_consumer.py | kinesis_consumer.py | **NYI** (M2) | — |
-| Ingestion | Checkpoint store | FileCheckpointManager | file (dev) + DynamoDB lease (prod) | **NYI** (M2) | — |
-| Ingestion | DLQ | ADLS _dlq/ | S3 _dlq/ | **NYI** (M2) | — |
-| Ingestion | Producer / NATS bridge | edge/*.py | Kinesis producer + same translate | **NYI** (M2) | — |
-| **Raw storage** | Landing JSONL, date-partitioned | ADLS raw/telemetry | S3 raw/telemetry | **NYI** (M3) | — |
+| **Ingestion** | Streaming bus | Event Hubs | Kinesis Data Streams | **VERIFIED** (M2, moto) | ingestion-evidence E-M2-1 |
+| Ingestion | Consumer receive→validate→buffer | eventhub_consumer.py | kinesis_consumer.py | **VERIFIED** (M2) | E-M2-1 (P0-01) |
+| Ingestion | Checkpoint store | FileCheckpointManager | file (dev) + DynamoDB lease (prod) | **VERIFIED** (M2, moto) | E-M2-1 (restart recovery) |
+| Ingestion | DLQ | ADLS _dlq/ | S3 _dlq/ | **VERIFIED** (M2, moto) | E-M2-1 |
+| Ingestion | Producer / NATS bridge | edge/*.py | Kinesis producer + same translate | **VERIFIED** (M2) | E-M2-1 + M1 translate |
+| **Raw storage** | Landing JSONL, date-partitioned | ADLS raw/telemetry | S3 raw/telemetry | **VERIFIED** (M2, moto) | E-M2-1 |
 | Raw storage | Versioning / lifecycle / encryption | ADLS + P0-05/P1-09 | S3 versioning + lifecycle + KMS | **NYI** (M3/M4) | — |
 | **Processing** | Auto Loader Bronze | cloudFiles abfss | cloudFiles s3 | **NYI** (M7) | — |
 | Processing | Silver clean+dedup+quarantine | dlt/silver/* | same (verbatim) | **SPEC** | — |

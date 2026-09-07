@@ -92,3 +92,13 @@ Result: **No known vulnerabilities found.**
 | Domain/cloud decoupling | VERIFIED | E4 |
 
 **Gate M1: PASS.** Proceed to Milestone 2 (AWS ingestion) permitted.
+
+## Milestone 2 — AWS Ingestion
+
+See `docs/evidence/ingestion-evidence.md` for full detail. Summary: **14
+ingestion tests + 143-test full suite passed** on emulated AWS (moto); P0-01
+checkpoint ordering, DynamoDB restart recovery, S3 raw/DLQ layout, and
+duplicate-retention-at-Bronze all verified. boto3 confined to 4 boundary
+modules; zero cloud coupling in domain logic; pip-audit clean. Live-cloud
+produce/consume/verify steps marked NOT EXECUTED (require AWS account).
+**Gate M2: PASS.**

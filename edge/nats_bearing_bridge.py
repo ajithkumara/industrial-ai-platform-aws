@@ -1,11 +1,11 @@
 """
-NATS -> Event Hub Bridge for bearing sensor / inference telemetry.
+NATS -> Kinesis Bridge for bearing sensor / inference telemetry.
 
 Brings adaptive-edge-orchestrator's bearing-fault-classification events
 (published to NATS by sensor_replay.py, inference_engine.py, the Policy
 Executor, and the Context Monitor) into this platform's generic
-TelemetryEvent envelope, so they flow through the exact same Event Hub ->
-consumer -> ADLS -> DLT Bronze/Silver/Gold pipeline as vehicle/industrial
+TelemetryEvent envelope, so they flow through the exact same Kinesis ->
+consumer -> S3 -> DLT Bronze/Silver/Gold pipeline as vehicle/industrial
 telemetry -- via four config-driven asset types: bearing_sensor,
 bearing_inference, orchestrator_mode, and context_snapshot (see
 config/asset_types/). A fifth asset type, cloud_validation, shares this
@@ -211,8 +211,8 @@ def translate_inference_record(raw: dict, subject: str = "inference.bearing") ->
 class NatsBearingBridge:
     """
     Subscribes to the configured NATS subjects and republishes translated
-    events onto Event Hub via the existing EventHubProducer -- no new
-    Event Hub client code, reuses exactly what edge/vehicle_producer.py
+    events onto Kinesis via the existing KinesisProducer -- no new
+    Kinesis client code, reuses exactly what edge/vehicle_producer.py
     and edge/industrial_producer.py already use.
 
     A malformed/unexpected message on either subject is logged and
@@ -243,9 +243,9 @@ class NatsBearingBridge:
         # edge/base_producer.py (Milestone 2). Importing it lazily keeps
         # the pure translate_* functions in this module importable with no
         # cloud SDK present (used by data-quality tests + fixtures).
-        from .base_producer import EventHubProducer
+        from .base_producer import KinesisProducer
 
-        self._producer = EventHubProducer()
+        self._producer = KinesisProducer()
         self._nc = None
         self._last_context_forward: dict[str, float] = {}
 
