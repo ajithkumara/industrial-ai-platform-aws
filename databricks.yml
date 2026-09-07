@@ -11,6 +11,12 @@ bundle:
 # is needed in the pipeline.
 include:
   - databricks/resources/pipelines/*.yml
+  # ML training/eval + async cloud scoring (plain PySpark Jobs, not DLT).
+  - databricks/resources/jobs/cloud_forest.yml
+  - databricks/resources/jobs/bearing_isolation_forest.yml
+  # Weekly Delta maintenance (OPTIMIZE/VACUUM) + daily MLflow model backup.
+  - databricks/resources/jobs/maintenance.yml
+  - databricks/resources/jobs/mlflow_backup.yml
 
 variables:
   s3_bucket:

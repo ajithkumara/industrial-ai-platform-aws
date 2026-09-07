@@ -1,0 +1,75 @@
+# ACTIVE / DEPLOYED -- unlike bronze.yml, silver.yml, gold.yml in this
+# same directory (which are intentionally NOT included in databricks.yml
+# and wrap DLT-dependent notebooks that cannot run as standalone Jobs),
+# this resource IS wired into databricks.yml's `include:` list.
+#
+# train_cloud_forest.py and score_escalations.py are plain PySpark
+# notebooks (no `import dlt`) -- training and asynchronous batch scoring
+# are not continuous streaming operations and do not belong in the DLT
+# pipeline (industrial_ai_dlt_pipeline in
+# databricks/resources/pipelines/dlt.yml). This Job is the correct,
+# separate execution vehicle for both.
+#
+# Two independent tasks, not one pipeline of two steps: score_escalations
+# runs far more often than train_cloud_forest (retraining is an
+# occasional, deliberate action; scoring should run whenever new HYBRID
+# escalations have landed). Keeping them as separate tasks with separate
+# schedules avoids retraining the model on every scoring run.
+resources:
+  jobs:
+    cloud_forest_train:
+      name: "CloudForest — Train Cloud Validation Model"
+      # P0-04: Alert on failure so a broken training run is not silently ignored.
+      email_notifications:
+        on_failure:
+          - aakumara@gmail.com
+      environments:
+        - environment_key: serverless
+          spec:
+            client: "1"
+      tasks:
+        - task_key: train_cloud_forest
+          notebook_task:
+            notebook_path: ../../../ml/cloud_forest/train_cloud_forest.py
+            source: WORKSPACE
+          environment_key: serverless
+      # Manual/on-demand by default -- retraining is a deliberate action
+      # during thesis evaluation, not a background schedule. Uncomment to
+      # automate once a real retraining cadence is decided (Roadmap V2+).
+      # schedule:
+      #   quartz_cron_expression: "0 0 3 * * ?"
+      #   timezone_id: "UTC"
+
+    cloud_forest_score_escalations:
+      name: "CloudForest — Score HYBRID Escalations"
+      # P0-04: Alert on failure. This job runs every 15 min; a silent failure
+      # means escalations go un-scored without any operator notification.
+      email_notifications:
+        on_failure:
+          - aakumara@gmail.com
+      environments:
+        - environment_key: serverless
+          spec:
+            client: "1"
+      tasks:
+        - task_key: score_escalations
+          notebook_task:
+            notebook_path: ../../../ml/cloud_forest/score_escalations.py
+            source: WORKSPACE
+            base_parameters:
+              # PORTABILITY: supply the ADLS landing path from bundle variables
+              # (declared in ../../../databricks.yml, sourced from the Terraform
+              # output storage_account_name) instead of the notebook's
+              # hardcoded default -- so scoring targets the right account in any
+              # subscription. See databricks/resources/pipelines/dlt.yml.
+              bronze_path: "s3://${var.s3_bucket}/raw/telemetry/"
+          environment_key: serverless
+      # Runs every 15 minutes -- frequent enough that escalations get an
+      # asynchronous second opinion promptly (useful for a live
+      # evaluation session) without running on every single event
+      # (HYBRID escalations are, by design, a minority of traffic).
+      # This never blocks or delays the edge decision either way -- see
+      # ml/cloud_forest/score_escalations.py's architectural invariant.
+      schedule:
+        quartz_cron_expression: "0 */15 * * * ?"
+        timezone_id: "UTC"

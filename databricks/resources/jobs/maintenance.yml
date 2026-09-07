@@ -1,0 +1,36 @@
+resources:
+  jobs:
+    delta_maintenance:
+      name: "Delta Maintenance — OPTIMIZE & VACUUM"
+      description: >
+        P1-10: Weekly Delta Lake maintenance job.
+        OPTIMIZE compacts small files produced by streaming writes and DLT micro-batches,
+        keeping read performance high. VACUUM removes files older than the 7-day
+        retention threshold, reclaiming ADLS storage.
+        Runs every Sunday at 02:00 UTC to avoid overlap with the Monday ML training jobs.
+
+      schedule:
+        quartz_cron_expression: "0 0 2 ? * SUN"
+        timezone_id: "UTC"
+        pause_status: UNPAUSED
+
+      email_notifications:
+        on_failure:
+          - aakumara@gmail.com
+
+      tasks:
+        - task_key: optimize_and_vacuum
+          description: "OPTIMIZE + VACUUM all Silver and Gold Delta tables"
+          notebook_task:
+            notebook_path: ../../../notebooks/maintenance/delta_optimize_vacuum.py
+            source: WORKSPACE
+          job_cluster_key: maintenance_cluster
+
+      job_clusters:
+        - job_cluster_key: maintenance_cluster
+          new_cluster:
+            spark_version: "15.4.x-scala2.12"
+            node_type_id: "Standard_DS3_v2"
+            num_workers: 1
+            spark_conf:
+              spark.databricks.delta.vacuum.parallelDelete.enabled: "true"

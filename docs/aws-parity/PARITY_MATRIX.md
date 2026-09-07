@@ -37,14 +37,14 @@
 | Processing | Config-driven flatten | flatten_payloads.py | identical (verbatim) | **VERIFIED** (local Spark DQ8/9/10) | silver-evidence |
 | Processing | Gold KPIs + evidence + ML features | dlt/gold/* | identical (verbatim) | **VERIFIED** (local Spark + feature_spec) | gold-evidence |
 | **Governance** | Unity Catalog | Access Connector MI → abfss | IAM role → s3 external location | **IMPLEMENTED** (hcl2+checkov; apply NOT EXECUTED) | terraform-evidence |
-| **ML/MLOps** | Train/eval/CloudForest + MLflow | ml/* jobs | same (S3 URIs) | **NYI** (M8) | — |
+| **ML/MLOps** | Train/eval/CloudForest + MLflow | ml/* jobs | identical (S3 URIs) | **VERIFIED** (contract+repro; live run NOT EXECUTED) | ml-evidence |
 | **Security** | Identity | Managed Identity | IAM roles (least priv) | **IMPLEMENTED** (checkov; runtime roles least-priv) | security-evidence S2 |
 | Security | Secrets | Key Vault | Secrets Manager + KMS | **IMPLEMENTED** (blank placeholders) | security-evidence S9 |
 | Security | Encryption | platform | KMS CMKs | **IMPLEMENTED** (CMK+rotation+policy) | security-evidence S3 |
 | Security | CI auth | OIDC→Azure AD | OIDC→AWS IAM role | **NYI** (M9) | — |
 | **Observability** | Logs/metrics/alarms | Azure Monitor/App Insights | CloudWatch + CloudTrail | **IMPLEMENTED** (alarms coded; live metrics NOT EXECUTED) | terraform-evidence E-M4 |
 | **Networking** | Private connectivity | (implicit) | VPC + endpoints, block public | **IMPLEMENTED** (checkov) | security-evidence S8 |
-| **CI/CD** | Plan/apply + PR diff + smoke | ci.yml etc. | AWS OIDC workflows | **NYI** (M9) | — |
+| **CI/CD** | Plan/apply + PR diff + smoke | ci.yml etc. | AWS OIDC workflows | **IMPLEMENTED** (YAML valid; live runs NOT EXECUTED) | cicd-evidence |
 | **Infra** | Terraform modules + remote state | azurerm | AWS provider + S3/DynamoDB backend | **IMPLEMENTED** (39 .tf, hcl2+checkov 244 pass; plan/apply NOT EXECUTED) | terraform-evidence E-M4 |
 | **Reliability** | Failure/recovery | (Azure runbooks) | injected-failure tests | **NYI** (M11) | — |
 

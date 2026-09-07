@@ -1,0 +1,98 @@
+# ACTIVE / DEPLOYED -- same pattern as cloud_forest.yml (see that file's
+# header comment for why standalone Jobs, not the DLT pipeline, are the
+# correct execution vehicle for training/evaluation notebooks).
+#
+# ml/train_bearing_isolation_forest.py and ml/evaluate_bearing_model.py
+# are plain PySpark notebooks (no `import dlt`) -- training and one-time
+# TEST evaluation are deliberate, on-demand actions during thesis
+# evaluation, not continuous streaming operations, and must not be folded
+# into industrial_ai_dlt_pipeline.
+#
+# COMPUTE: serverless, not a job_cluster with an explicit node_type_id.
+# 2026-08-24: two different VM SKUs (Standard_DS3_v2, then
+# Standard_D4ds_v5) both hit CLOUD_PROVIDER_RESOURCE_STOCKOUT in
+# CanadaCentral back to back -- a regional on-demand capacity shortage,
+# not a config mistake. databricks/resources/pipelines/dlt.yml already
+# runs serverless successfully in this same workspace (Databricks-managed
+# capacity pool, no VM SKU to stock out), so these two Jobs use the same
+# approach instead of a third guessed SKU. This workload (fit/score an
+# IsolationForest on ~2,245 pandas rows on the driver) has no real
+# cluster-sizing requirement anyway.
+#
+# Two independent, manual-only Jobs, deliberately NOT chained
+# automatically:
+#   - bearing_isolation_forest_train fits the model, selects + freezes
+#     the VALIDATION-only threshold, and prints/logs the train_run_id.
+#   - bearing_isolation_forest_evaluate requires that train_run_id as an
+#     explicit parameter (no default) and performs the one-time TEST
+#     evaluation. Requiring a human to copy the run_id across is
+#     intentional friction -- it is the same discipline
+#     evaluate_bearing_model.py enforces in code (see that file's module
+#     docstring): a TEST evaluation must always be traceable to one
+#     specific, deliberate training run, never "whatever trained most
+#     recently."
+resources:
+  jobs:
+    bearing_isolation_forest_train:
+      name: "Edge Bearing Isolation Forest — Train + Freeze Threshold"
+      # P0-04: Alert on failure so a broken training run is not silently ignored.
+      email_notifications:
+        on_failure:
+          - aakumara@gmail.com
+      tasks:
+        - task_key: train_bearing_isolation_forest
+          notebook_task:
+            notebook_path: ../../../ml/train_bearing_isolation_forest.py
+            source: WORKSPACE
+            base_parameters:
+              repo_root: "${workspace.file_path}"
+              gold_table: "industrial_ai.gold.bearing_ml_features"
+              dataset_run_id: "cwru_exp_001"
+              registered_model_name: "industrial_ai.ml.edge_bearing_isolation_forest"
+              n_estimators: "100"
+              max_samples: "auto"
+              contamination: "auto"
+              random_seed: "42"
+          environment_key: bearing_isolation_forest_env
+      environments:
+        - environment_key: bearing_isolation_forest_env
+          spec:
+            client: "1"
+            dependencies:
+              - scikit-learn
+              - mlflow
+      # Manual/on-demand -- training is a deliberate action during thesis
+      # evaluation, not a background schedule.
+
+    bearing_isolation_forest_evaluate:
+      name: "Edge Bearing Isolation Forest — TEST Evaluation (frozen threshold)"
+      # P0-04: Alert on failure.
+      email_notifications:
+        on_failure:
+          - aakumara@gmail.com
+      tasks:
+        - task_key: evaluate_bearing_model
+          notebook_task:
+            notebook_path: ../../../ml/evaluate_bearing_model.py
+            source: WORKSPACE
+            base_parameters:
+              repo_root: "${workspace.file_path}"
+              # No default for train_run_id -- must be supplied explicitly
+              # at run time (Workflows UI "Run with different parameters",
+              # or `databricks bundle run bearing_isolation_forest_evaluate
+              # -t dev --params train_run_id=<run_id>`). See header comment.
+              train_run_id: ""
+              gold_table: "industrial_ai.gold.bearing_ml_features"
+          environment_key: bearing_isolation_forest_env
+      environments:
+        - environment_key: bearing_isolation_forest_env
+          spec:
+            client: "1"
+            dependencies:
+              - scikit-learn
+              - mlflow
+      # Manual/on-demand only -- see header comment. Never schedule this
+      # job: a schedule would silently re-run the TEST evaluation
+      # repeatedly against unchanged data, which is harmless numerically
+      # but defeats the "TEST is touched exactly once, deliberately"
+      # discipline this whole methodology is built around.

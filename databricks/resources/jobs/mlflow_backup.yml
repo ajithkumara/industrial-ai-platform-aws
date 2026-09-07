@@ -1,0 +1,36 @@
+resources:
+  jobs:
+    mlflow_artifact_backup:
+      name: "MLflow Model Artifact Backup"
+      description: >
+        P1-15: Daily backup of MLflow registered model artifacts to a versioned
+        ADLS path outside the Databricks-managed MLflow store.
+        Protects against accidental model deletion or workspace corruption.
+        Backs up Production and Staging stage models only.
+
+      schedule:
+        quartz_cron_expression: "0 0 3 * * ?"
+        timezone_id: "UTC"
+        pause_status: UNPAUSED
+
+      email_notifications:
+        on_failure:
+          - aakumara@gmail.com
+
+      tasks:
+        - task_key: backup_mlflow_models
+          description: "Export Production/Staging MLflow models to ADLS backup path"
+          notebook_task:
+            notebook_path: ../../../notebooks/mlops/mlflow_artifact_backup.py
+            source: WORKSPACE
+            base_parameters:
+              backup_bucket: "${var.s3_bucket}"
+              backup_prefix: "mlflow-backup"
+          job_cluster_key: backup_cluster
+
+      job_clusters:
+        - job_cluster_key: backup_cluster
+          new_cluster:
+            spark_version: "15.4.x-scala2.12"
+            node_type_id: "Standard_DS3_v2"
+            num_workers: 1

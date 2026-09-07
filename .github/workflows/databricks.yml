@@ -1,0 +1,25 @@
+name: Databricks CI
+
+# No paths filter: required status check must always report (see the Azure
+# reference rationale). Cheap to run.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate Databricks Bundle
+    runs-on: ubuntu-latest
+    env:
+      # Databricks OAuth service principal (no PAT committed). Host is non-secret.
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      BUNDLE_VAR_s3_bucket: ${{ vars.S3_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - name: Databricks Bundle Validate
+        run: databricks bundle validate -t dev
