@@ -41,12 +41,12 @@
 | **Security** | Identity | Managed Identity | IAM roles (least priv) | **IMPLEMENTED** (checkov; runtime roles least-priv) | security-evidence S2 |
 | Security | Secrets | Key Vault | Secrets Manager + KMS | **IMPLEMENTED** (blank placeholders) | security-evidence S9 |
 | Security | Encryption | platform | KMS CMKs | **IMPLEMENTED** (CMK+rotation+policy) | security-evidence S3 |
-| Security | CI auth | OIDC→Azure AD | OIDC→AWS IAM role | **NYI** (M9) | — |
+| Security | CI auth | OIDC→Azure AD | OIDC→AWS IAM role | **IMPLEMENTED** (workflows; live runs NOT EXECUTED) | cicd-evidence |
 | **Observability** | Logs/metrics/alarms | Azure Monitor/App Insights | CloudWatch + CloudTrail | **IMPLEMENTED** (alarms coded; live metrics NOT EXECUTED) | terraform-evidence E-M4 |
 | **Networking** | Private connectivity | (implicit) | VPC + endpoints, block public | **IMPLEMENTED** (checkov) | security-evidence S8 |
 | **CI/CD** | Plan/apply + PR diff + smoke | ci.yml etc. | AWS OIDC workflows | **IMPLEMENTED** (YAML valid; live runs NOT EXECUTED) | cicd-evidence |
 | **Infra** | Terraform modules + remote state | azurerm | AWS provider + S3/DynamoDB backend | **IMPLEMENTED** (39 .tf, hcl2+checkov 244 pass; plan/apply NOT EXECUTED) | terraform-evidence E-M4 |
-| **Reliability** | Failure/recovery | (Azure runbooks) | injected-failure tests | **NYI** (M11) | — |
+| **Reliability** | Failure/recovery | (Azure runbooks) | injected-failure tests | **VERIFIED** (5 moto failure tests) | AWS_FAILURE_ENGINEERING |
 
 ## Rule
 
