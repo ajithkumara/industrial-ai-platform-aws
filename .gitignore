@@ -1,0 +1,26 @@
+@'
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl
+
+# Databricks
+.databricks/
+
+# Env / secrets
+.env
+*.local
+
+# OS / editor
+.DS_Store
+desktop.ini
+Thumbs.db
