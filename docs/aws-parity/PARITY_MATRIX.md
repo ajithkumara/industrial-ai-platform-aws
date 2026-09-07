@@ -31,21 +31,21 @@
 | Ingestion | DLQ | ADLS _dlq/ | S3 _dlq/ | **VERIFIED** (M2, moto) | E-M2-1 |
 | Ingestion | Producer / NATS bridge | edge/*.py | Kinesis producer + same translate | **VERIFIED** (M2) | E-M2-1 + M1 translate |
 | **Raw storage** | Landing JSONL, date-partitioned | ADLS raw/telemetry | S3 raw/telemetry | **VERIFIED** (M2, moto) | E-M2-1 |
-| Raw storage | Versioning / lifecycle / encryption | ADLS + P0-05/P1-09 | S3 versioning + lifecycle + KMS | **NYI** (M3/M4) | — |
+| Raw storage | Versioning / lifecycle / encryption | ADLS + P0-05/P1-09 | S3 versioning + lifecycle + KMS | **IMPLEMENTED** (hcl2+checkov; apply NOT EXECUTED) | terraform-evidence E-M4 |
 | **Processing** | Auto Loader Bronze | cloudFiles abfss | cloudFiles s3 | **NYI** (M7) | — |
 | Processing | Silver clean+dedup+quarantine | dlt/silver/* | same (verbatim) | **SPEC** | — |
 | Processing | Config-driven flatten | flatten_payloads.py | same (verbatim) | **SPEC** | — |
 | Processing | Gold KPIs + evidence + ML features | dlt/gold/* | same (verbatim) | **SPEC** | — |
 | **Governance** | Unity Catalog | Access Connector MI → abfss | IAM role → s3 external location | **NYI** (M6) | — |
 | **ML/MLOps** | Train/eval/CloudForest + MLflow | ml/* jobs | same (S3 URIs) | **NYI** (M8) | — |
-| **Security** | Identity | Managed Identity | IAM roles (least priv) | **NYI** (M4/M5) | — |
-| Security | Secrets | Key Vault | Secrets Manager + KMS | **NYI** (M4/M5) | — |
-| Security | Encryption | platform | KMS CMKs | **NYI** (M4/M5) | — |
+| **Security** | Identity | Managed Identity | IAM roles (least priv) | **IMPLEMENTED** (checkov; runtime roles least-priv) | security-evidence S2 |
+| Security | Secrets | Key Vault | Secrets Manager + KMS | **IMPLEMENTED** (blank placeholders) | security-evidence S9 |
+| Security | Encryption | platform | KMS CMKs | **IMPLEMENTED** (CMK+rotation+policy) | security-evidence S3 |
 | Security | CI auth | OIDC→Azure AD | OIDC→AWS IAM role | **NYI** (M9) | — |
-| **Observability** | Logs/metrics/alarms | Azure Monitor/App Insights | CloudWatch + CloudTrail | **NYI** (M10) | — |
-| **Networking** | Private connectivity | (implicit) | VPC + endpoints, block public | **NYI** (M4/M5) | — |
+| **Observability** | Logs/metrics/alarms | Azure Monitor/App Insights | CloudWatch + CloudTrail | **IMPLEMENTED** (alarms coded; live metrics NOT EXECUTED) | terraform-evidence E-M4 |
+| **Networking** | Private connectivity | (implicit) | VPC + endpoints, block public | **IMPLEMENTED** (checkov) | security-evidence S8 |
 | **CI/CD** | Plan/apply + PR diff + smoke | ci.yml etc. | AWS OIDC workflows | **NYI** (M9) | — |
-| **Infra** | Terraform modules + remote state | azurerm | AWS provider + S3/DynamoDB backend | **NYI** (M4) | — |
+| **Infra** | Terraform modules + remote state | azurerm | AWS provider + S3/DynamoDB backend | **IMPLEMENTED** (39 .tf, hcl2+checkov 244 pass; plan/apply NOT EXECUTED) | terraform-evidence E-M4 |
 | **Reliability** | Failure/recovery | (Azure runbooks) | injected-failure tests | **NYI** (M11) | — |
 
 ## Rule

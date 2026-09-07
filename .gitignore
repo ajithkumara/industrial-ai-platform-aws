@@ -24,3 +24,5 @@ __pycache__/
 .DS_Store
 desktop.ini
 Thumbs.db
+# Terraform backend config (account-specific)
+backend.hcl

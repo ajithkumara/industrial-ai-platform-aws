@@ -1,0 +1,18 @@
+# Copy to terraform.tfvars and fill in. terraform.tfvars is git-ignored.
+# NOTHING account-specific is hardcoded in the repo — you supply it here.
+
+project     = "industrial-ai"
+environment = "dev"
+region      = "ca-central-1"
+
+# S3 bucket names are GLOBALLY unique. Provide short unique suffixes (e.g. a
+# 6-char random string). Do NOT use your AWS account ID.
+lake_bucket_suffix       = "REPLACE_UNIQUE_SUFFIX"
+cloudtrail_bucket_suffix = "REPLACE_UNIQUE_SUFFIX"
+
+# GitHub OIDC: the org/repo whose Actions may assume the CI deploy role.
+github_repo        = "ajithkumara/industrial-ai-platform-aws"
+enable_github_oidc = true
+
+# Optional: email for CloudWatch alarm notifications (blank = no subscription).
+alarm_email = ""

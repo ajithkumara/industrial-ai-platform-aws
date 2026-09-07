@@ -1,0 +1,11 @@
+output "s3_bucket" { value = module.s3.bucket }
+output "kinesis_stream_name" { value = module.kinesis.stream_name }
+output "dynamodb_checkpoint_table" { value = module.dynamodb.table_name }
+output "consumer_role_arn" { value = module.iam.consumer_role_arn }
+output "producer_role_arn" { value = module.iam.producer_role_arn }
+output "ci_role_arn" { value = module.iam.ci_role_arn }
+output "ecr_repository_url" { value = module.ecr.repository_url }
+output "vpc_id" { value = module.vpc.vpc_id }
+output "cloudtrail_arn" { value = module.cloudtrail.trail_arn }
+output "alarm_topic_arn" { value = module.cloudwatch.alarm_topic_arn }
+output "kms_key_arns" { value = module.kms.key_arns }

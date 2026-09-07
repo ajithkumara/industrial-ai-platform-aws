@@ -1,0 +1,8 @@
+# Copy to backend.hcl and fill in from `terraform/bootstrap` outputs.
+# backend.hcl is git-ignored (contains your account-specific bucket name).
+#   terraform init -backend-config=backend.hcl
+bucket         = "industrial-ai-tfstate-REPLACE_SUFFIX"
+key            = "dev/terraform.tfstate"
+region         = "ca-central-1"
+dynamodb_table = "industrial-ai-tflock"
+encrypt        = true

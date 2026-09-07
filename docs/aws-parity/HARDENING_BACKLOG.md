@@ -34,6 +34,7 @@
 
 ## Findings backlog (populated by milestone reviews)
 
+| B-M4-TIGHTEN | P1 | Security | CI deploy IAM role uses broad `*` Terraform perms (checkov CKV_AWS_107-111/356) | Split into per-service scoped statements or permission boundary once resource set stable | security-evidence R1 |
 | F-M1-01 | P3 | Lint | Two unused symbols inherited verbatim from Azure ref (`defaultdict` in batch_buffer, `splits` in cwru_loader) | Remove in a lint-cleanup pass; no behavioural impact | M1 evidence E3 |
 
 ## Execution order (dependency-respecting)
