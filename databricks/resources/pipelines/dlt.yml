@@ -1,0 +1,58 @@
+resources:
+  pipelines:
+    industrial_ai_dlt_pipeline:
+      name: "AWS Industrial AI DLT Pipeline"
+
+      # Unity Catalog on AWS — same catalog name as the Azure reference. The
+      # `industrial_ai` catalog + bronze/silver/gold schemas are provisioned by
+      # terraform/modules/databricks (UC storage credential -> S3 external
+      # location). Silver/Gold notebooks fully-qualify industrial_ai.<schema>.<table>.
+      catalog: "industrial_ai"
+      target: bronze
+
+      development: true
+      continuous: false
+      photon: true
+      serverless: true
+
+      # Failure alerting (Azure P0-04 parity).
+      notifications:
+        - email_recipients:
+            - aakumara@gmail.com
+          alerts:
+            - on-update-failure
+            - on-flow-failure
+
+      libraries:
+        - notebook:
+            path: ../../../dlt/bronze/ingest_raw_events.py
+        - notebook:
+            path: ../../../dlt/silver/clean_and_deduplicate.py
+        - notebook:
+            path: ../../../dlt/silver/flatten_payloads.py
+        - notebook:
+            path: ../../../dlt/gold/asset_health_summary.py
+        - notebook:
+            path: ../../../dlt/gold/mode_history.py
+        - notebook:
+            path: ../../../dlt/gold/detection_performance.py
+        - notebook:
+            path: ../../../dlt/gold/edge_autonomy.py
+        - notebook:
+            path: ../../../dlt/gold/cloud_egress.py
+        - notebook:
+            path: ../../../dlt/gold/escalation_efficacy.py
+        - notebook:
+            path: ../../../dlt/gold/bearing_ml_features.py
+
+      configuration:
+        # Same deterministic config-dir pattern as the Azure reference.
+        asset_types_config_dir: "${workspace.file_path}/config/asset_types"
+        dlt_common_dir: "${workspace.file_path}/dlt/common"
+        # AWS: S3 landing path (replaces the Azure abfss:// URI). The consumer
+        # writes raw JSONL here (see consumer/storage_client.py RAW_FOLDER).
+        bronze_path: "s3://${var.s3_bucket}/raw/telemetry/"
+        # NOTE: the Azure ABFS OAuth spark.hadoop.fs.azure.* lines are
+        # intentionally ABSENT. On AWS, the DLT pipeline reaches S3 through the
+        # Unity Catalog external location backed by the UC IAM role — no
+        # storage-account spark configuration is required.

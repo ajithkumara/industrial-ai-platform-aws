@@ -1,0 +1,41 @@
+bundle:
+  name: aws-industrial-ai-platform
+
+# AWS translation of the Azure reference databricks.yml. The bundle root is the
+# repository root (dlt/ and config/asset_types/ are siblings of databricks/, so
+# the root must contain all of them). The DLT notebooks are byte-identical to
+# the Azure repo (verified — see docs/evidence). The ONLY cloud difference is
+# the pipeline's bronze_path (s3:// instead of abfss://) and the removal of the
+# Azure ABFS OAuth spark configuration — on AWS, S3 access is granted via the
+# Unity Catalog external location / instance profile, so no storage spark conf
+# is needed in the pipeline.
+include:
+  - databricks/resources/pipelines/*.yml
+
+variables:
+  s3_bucket:
+    description: >-
+      S3 data-lake bucket backing the lakehouse. Source from the core Terraform
+      output `s3_bucket`. Consumed by resources/pipelines/dlt.yml (bronze_path).
+  storage_container:
+    description: "Logical medallion container/prefix (kept for parity)."
+    default: "datalake"
+  sql_warehouse_id:
+    description: "SQL warehouse id for the operational dashboard (Milestone later)."
+    default: ""
+
+targets:
+  dev:
+    mode: development
+    default: true
+  test:
+    mode: development
+  prod:
+    mode: production
+
+# PORTABILITY: the workspace host is NOT hardcoded. The Databricks CLI resolves
+# it from DATABRICKS_HOST (or a profile). In CI, use a Databricks OAuth service
+# principal. No token is committed.
+#   export DATABRICKS_HOST=https://dbc-XXXX.cloud.databricks.com
+#   export BUNDLE_VAR_s3_bucket=$(cd terraform/environments/dev && terraform output -raw s3_bucket)
+#   databricks bundle deploy -t dev

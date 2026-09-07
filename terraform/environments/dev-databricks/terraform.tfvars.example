@@ -1,0 +1,8 @@
+# Copy to terraform.tfvars (git-ignored). Fill from the core dev outputs +
+# your Databricks account console. Nothing account-specific is committed.
+databricks_host           = "https://dbc-XXXXXXXX-XXXX.cloud.databricks.com"
+s3_bucket                 = "industrial-ai-dev-lake-REPLACE_SUFFIX"
+s3_bucket_arn             = "arn:aws:s3:::industrial-ai-dev-lake-REPLACE_SUFFIX"
+s3_kms_key_arn            = "arn:aws:kms:ca-central-1:ACCOUNT:key/REPLACE"
+databricks_uc_external_id = "REPLACE_FROM_DATABRICKS_ACCOUNT_CONSOLE"
+principal                 = ""   # defaults to current user
