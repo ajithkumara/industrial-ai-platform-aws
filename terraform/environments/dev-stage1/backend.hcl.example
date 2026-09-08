@@ -1,0 +1,10 @@
+# Copy this to backend.hcl and fill in your values.
+# backend.hcl is git-ignored (no account IDs committed).
+#
+# Get these values from `terraform output` in terraform/bootstrap/ after running bootstrap.
+
+bucket         = "iap-tf-state-<YOUR_ACCOUNT_ID>"   # bootstrap output: state_bucket_name
+key            = "dev-stage1/terraform.tfstate"
+region         = "ca-central-1"
+dynamodb_table = "iap-tf-lock"                       # bootstrap output: lock_table_name
+encrypt        = true

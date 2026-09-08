@@ -1,0 +1,11 @@
+# Copy this to terraform.tfvars and fill in your values.
+# terraform.tfvars is git-ignored.
+
+aws_region     = "ca-central-1"
+project_prefix = "iap"
+environment    = "dev"
+
+# Optional: set these to also create the GitHub OIDC CI role.
+# Leave blank ("") to skip.
+github_org  = ""   # e.g. "your-github-username"
+github_repo = ""   # e.g. "industrial-ai-platform-aws"
