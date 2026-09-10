@@ -6,5 +6,8 @@
 bucket         = "iap-tf-state-<YOUR_ACCOUNT_ID>"   # bootstrap output: state_bucket_name
 key            = "dev-stage1/terraform.tfstate"
 region         = "ca-central-1"
-dynamodb_table = "iap-tf-lock"                       # bootstrap output: lock_table_name
+use_lockfile   = true
+# dynamodb_table is deprecated in Terraform >= 1.10. use_lockfile stores the lock in S3.
+# If using an older Terraform version, replace use_lockfile with:
+#   dynamodb_table = "iap-tf-lock"   # bootstrap output: lock_table_name
 encrypt        = true

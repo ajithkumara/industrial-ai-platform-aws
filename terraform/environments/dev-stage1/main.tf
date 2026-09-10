@@ -46,7 +46,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "lake" {
   rule {
     apply_server_side_encryption_by_default {
       # AWS-managed key (free). Upgrade to aws:kms + CMK in full dev env.
-      sse_algorithm = "aws:s3"
+      sse_algorithm = "AES256"
     }
     bucket_key_enabled = false
   }
