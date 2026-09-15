@@ -26,3 +26,6 @@ desktop.ini
 Thumbs.db
 # Terraform backend config (account-specific)
 backend.hcl
+
+# Terraform plan files
+*.tfplan
