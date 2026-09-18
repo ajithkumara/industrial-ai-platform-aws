@@ -29,3 +29,10 @@ backend.hcl
 
 # Terraform plan files
 *.tfplan
+
+# Generated data (lives in S3, not git)
+data/raw/
+data/*.json
+
+# Lambda build artefacts
+terraform/modules/fleet_api/fleet_api_lambda.zip

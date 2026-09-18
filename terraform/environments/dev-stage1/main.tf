@@ -271,6 +271,30 @@ resource "aws_iam_role_policy" "producer" {
 }
 
 # ---------------------------------------------------------------------------
+# CloudWatch — dashboards, alarms, SNS alerting
+# ---------------------------------------------------------------------------
+module "monitoring" {
+  source = "../../modules/cloudwatch"
+
+  name_prefix         = local.prefix
+  environment         = var.environment
+  kinesis_stream_name = aws_kinesis_stream.telemetry.name
+  alarm_email         = "aakumara@gmail.com"
+
+  # Stage 1: no CMK — use AWS-managed keys (free)
+  log_kms_key_arn = null
+  sns_kms_key_id  = null
+  log_retention_days = 7  # keep costs near $0 in dev
+
+  tags = {
+    Project     = "industrial-ai-platform"
+    Environment = "dev-stage1"
+    ManagedBy   = "terraform"
+    CostStage   = "stage1-ephemeral"
+  }
+}
+
+# ---------------------------------------------------------------------------
 # GitHub OIDC CI role (optional — only created when github_org is set)
 # ---------------------------------------------------------------------------
 resource "aws_iam_openid_connect_provider" "github" {
@@ -356,4 +380,54 @@ resource "aws_iam_role_policy" "github_ci" {
   name   = "${local.prefix}-github-ci-policy"
   role   = aws_iam_role.github_ci[0].id
   policy = data.aws_iam_policy_document.github_ci_policy[0].json
+}
+
+# ---------------------------------------------------------------------------
+# Athena — Glue catalog + telemetry table + workgroup + results bucket
+# ---------------------------------------------------------------------------
+module "athena" {
+  source = "../../modules/athena"
+
+  name_prefix     = local.prefix
+  environment     = var.environment
+  region          = data.aws_region.current.name
+  lake_bucket     = aws_s3_bucket.lake.id
+  lake_bucket_arn = aws_s3_bucket.lake.arn
+
+  tags = {
+    Project     = "industrial-ai-platform"
+    Environment = "dev-stage1"
+    ManagedBy   = "terraform"
+    CostStage   = "stage1-ephemeral"
+  }
+}
+
+# ---------------------------------------------------------------------------
+# Fleet API — Lambda + API Gateway HTTP API (dynamic dashboard backend)
+# ---------------------------------------------------------------------------
+module "fleet_api" {
+  source = "../../modules/fleet_api"
+
+  name_prefix               = local.prefix
+  environment               = var.environment
+  region                    = data.aws_region.current.name
+  lake_bucket               = aws_s3_bucket.lake.id
+  lake_bucket_arn           = aws_s3_bucket.lake.arn
+  athena_results_bucket     = module.athena.results_bucket
+  athena_results_bucket_arn = module.athena.results_bucket_arn
+  athena_database           = module.athena.database_name
+  athena_table              = module.athena.table_name
+  athena_workgroup          = module.athena.workgroup_name
+
+  lambda_timeout = 60
+  lambda_memory  = 256
+
+  tags = {
+    Project     = "industrial-ai-platform"
+    Environment = "dev-stage1"
+    ManagedBy   = "terraform"
+    CostStage   = "stage1-ephemeral"
+  }
+
+  depends_on = [module.athena]
 }

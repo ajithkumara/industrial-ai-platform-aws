@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>IAP Fleet Operations Center</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>:root{--bg:#0d1117;--sf:#161b22;--sf2:#21262d;--br:#30363d;--tx:#e6edf3;--mu:#8b949e;--ac:#58a6ff;--gn:#3fb950;--ye:#d29922;--rd:#f85149;--pu:#a371f7}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx);display:flex;height:100vh;overflow:hidden}
+#sb{width:220px;background:var(--sf);border-right:1px solid var(--br);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.brand{padding:16px;border-bottom:1px solid var(--br);display:flex;align-items:center;gap:10px}
+.bi{width:32px;height:32px;background:linear-gradient(135deg,var(--ac),var(--pu));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.bt{font-size:13px;font-weight:700;line-height:1.2}.bs{font-size:10px;color:var(--mu)}
+nav{flex:1;padding:8px 0}
+.ns{padding:6px 12px 4px;font-size:10px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;margin-top:8px}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;border-radius:6px;margin:1px 8px;font-size:13px;color:var(--mu);transition:all .15s}
+.ni:hover{background:var(--sf2);color:var(--tx)}.ni.active{background:rgba(88,166,255,.15);color:var(--ac)}
+.ni .ic{font-size:16px;width:20px;text-align:center}
+.nb{margin-left:auto;background:var(--rd);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600}
+.sft{padding:12px;border-top:1px solid var(--br);font-size:11px;color:var(--mu)}
+.sd{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gn);margin-right:5px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+#mn{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#tb{background:var(--sf);border-bottom:1px solid var(--br);padding:0 20px;display:flex;align-items:center;gap:12px;height:52px;flex-shrink:0}
+#pt{font-size:15px;font-weight:600;flex:1}
+.tbb{background:var(--sf2);border:1px solid var(--br);padding:3px 10px;border-radius:6px;font-size:12px;color:var(--mu)}
+.tbtn{border:none;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600}
+#rb{background:var(--ac);color:#fff;}
+#rfb{background:var(--ye);color:#0d1117;}
+#ct{flex:1;overflow-y:auto;padding:20px}
+.grid{display:grid;gap:16px}
+.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.g21{grid-template-columns:2fr 1fr}
+@media(max-width:1200px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(2,1fr)}}
+.card{background:var(--sf);border:1px solid var(--br);border-radius:10px;padding:16px}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.ct2{font-size:13px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.5px}
+.kpi{display:flex;flex-direction:column;gap:4px}
+.kv{font-size:32px;font-weight:700;line-height:1}.kl{font-size:12px;color:var(--mu)}.ki{font-size:28px;margin-bottom:4px}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.bg{background:rgba(63,185,80,.15);color:var(--gn)}.br2{background:rgba(248,81,73,.15);color:var(--rd)}.by{background:rgba(210,153,34,.15);color:var(--ye)}.bb{background:rgba(88,166,255,.15);color:var(--ac)}.bp{background:rgba(163,113,247,.15);color:var(--pu)}
+#map{height:400px;border-radius:8px;border:1px solid var(--br)}
+.dt{width:100%;border-collapse:collapse;font-size:13px}
+.dt th{padding:8px 12px;text-align:left;color:var(--mu);font-size:11px;font-weight:600;text-transform:uppercase;border-bottom:1px solid var(--br)}
+.dt td{padding:9px 12px;border-bottom:1px solid var(--br);vertical-align:middle}
+.dt tr:last-child td{border-bottom:none}.dt tr:hover td{background:rgba(255,255,255,.03)}
+.pb{height:6px;background:var(--sf2);border-radius:3px;overflow:hidden;display:inline-block}
+.pf{height:100%;border-radius:3px}
+.ai{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:8px;margin-bottom:8px;border:1px solid var(--br)}
+.ai.critical{border-color:rgba(248,81,73,.4);background:rgba(248,81,73,.05)}.ai.warning{border-color:rgba(210,153,34,.4);background:rgba(210,153,34,.05)}.ai.info{border-color:rgba(88,166,255,.4);background:rgba(88,166,255,.05)}
+.aico{font-size:20px;flex-shrink:0}.ab h4{font-size:13px;font-weight:600;margin-bottom:2px}.ab p{font-size:12px;color:var(--mu)}.at{font-size:10px;color:var(--mu);margin-left:auto;white-space:nowrap}
+.vc{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;border:1px solid var(--br);cursor:pointer;transition:all .15s;margin-bottom:8px}
+.vc:hover{border-color:var(--ac);background:rgba(88,166,255,.05)}
+.va{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.vi h4{font-size:13px;font-weight:600;margin-bottom:2px}.vi p{font-size:11px;color:var(--mu)}.vs{margin-left:auto;text-align:right}
+.cc{position:relative;width:100%}
+.page{display:none}.page.active{display:block}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--br);border-radius:3px}
+.mr{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--br)}
+.mr:last-child{border-bottom:none}.ml2{font-size:12px;color:var(--mu)}.mv{font-size:13px;font-weight:600}
+#toast{position:fixed;bottom:20px;right:20px;background:var(--sf2);border:1px solid var(--br);padding:10px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .3s;z-index:9999}
+#loader{position:fixed;inset:0;background:rgba(13,17,23,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9998;gap:16px}
+#loader.hidden{display:none}
+.spin{width:40px;height:40px;border:3px solid var(--br);border-top-color:var(--ac);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#lmsg{font-size:14px;color:var(--mu)}
+#api-cfg{background:var(--sf2);border:1px solid var(--br);border-radius:10px;padding:20px;max-width:500px;width:90%;margin:0 auto}
+#api-cfg h3{font-size:15px;font-weight:600;margin-bottom:8px}
+#api-cfg p{font-size:12px;color:var(--mu);margin-bottom:12px}
+#api-inp{width:100%;background:var(--bg);border:1px solid var(--br);color:var(--tx);padding:8px 12px;border-radius:6px;font-size:13px;font-family:monospace}
+#api-btn{margin-top:10px;background:var(--ac);color:#fff;border:none;padding:8px 20px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:600;width:100%}</style>
+</head>
+<body>
+<div id="sb">
+  <div class="brand"><div class="bi">&#x1F69B;</div><div><div class="bt">IAP Fleet Ops</div><div class="bs">Industrial AI Platform</div></div></div>
+  <nav>
+    <div class="ns">Operations</div>
+    <div class="ni active" onclick="P('map')"><span class="ic">&#x1F5FA;&#xFE0F;</span> Live Map</div>
+    <div class="ni" onclick="P('fleet')"><span class="ic">&#x1F697;</span> Fleet Overview</div>
+    <div class="ni" onclick="P('kpis')"><span class="ic">&#x1F4CA;</span> KPI Dashboard</div>
+    <div class="ni" onclick="P('alerts')"><span class="ic">&#x1F6A8;</span> Alerts &amp; Incidents <span class="nb" id="abn">-</span></div>
+    <div class="ns">Vehicle Intelligence</div>
+    <div class="ni" onclick="P('engine')"><span class="ic">&#x2699;&#xFE0F;</span> Engine &amp; Health</div>
+    <div class="ni" onclick="P('maint')"><span class="ic">&#x1F527;</span> Predictive Maint.</div>
+    <div class="ni" onclick="P('dd')"><span class="ic">&#x1F50D;</span> Vehicle Drill-Down</div>
+    <div class="ns">Driver &amp; Operations</div>
+    <div class="ni" onclick="P('driver')"><span class="ic">&#x1F464;</span> Driver Safety</div>
+    <div class="ni" onclick="P('fuel')"><span class="ic">&#x26FD;</span> Fuel &amp; Energy</div>
+    <div class="ni" onclick="P('util')"><span class="ic">&#x1F4C5;</span> Utilization</div>
+    <div class="ni" onclick="P('routes')"><span class="ic">&#x1F6E3;&#xFE0F;</span> Route Analytics</div>
+    <div class="ni" onclick="P('trips')"><span class="ic">&#x1F550;</span> Trip History</div>
+    <div class="ns">Analytics &amp; AI</div>
+    <div class="ni" onclick="P('trends')"><span class="ic">&#x1F4C8;</span> Historical Trends</div>
+    <div class="ni" onclick="P('ml')"><span class="ic">&#x1F916;</span> ML Monitoring</div>
+    <div class="ni" onclick="P('dq')"><span class="ic">&#x1F6E1;&#xFE0F;</span> Data Quality</div>
+  </nav>
+  <div class="sft"><div><span class="sd"></span>AWS Live &middot; Athena-backed</div><div style="margin-top:4px" id="cache-ts">-</div></div>
+</div>
+<div id="mn">
+  <div id="tb">
+    <div id="pt">Live Fleet Map</div>
+    <div class="tbb">Fleet: <b id="tba">-</b> active / <b id="tbt">-</b> total</div>
+    <div class="tbb">Updated: <b id="tbt2">-</b></div>
+    <button id="rb" class="tbtn" onclick="loadData()">&#x21BB; Reload</button>
+    <button id="rfb" class="tbtn" onclick="refreshData()" title="Runs Athena queries (10-30s)">&#x26A1; Refresh AWS</button>
+  </div>
+  <div id="ct">
+<div id="page-map" class="page active">
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="card"><div class="kpi"><div class="ki">&#x1F7E2;</div><div class="kv" id="ma">-</div><div class="kl">Active Vehicles</div></div></div>
+    <div class="card"><div class="kpi"><div class="ki">&#x1F535;</div><div class="kv" id="mi">-</div><div class="kl">Idle / Parked</div></div></div>
+    <div class="card"><div class="kpi"><div class="ki">&#x26A1;</div><div class="kv" id="mev">-</div><div class="kl">EV Vehicles</div></div></div>
+    <div class="card"><div class="kpi"><div class="ki">&#x26A0;&#xFE0F;</div><div class="kv" id="mf">-</div><div class="kl">Active Faults</div></div></div>
+  </div>
+  <div class="card" style="padding:12px">
+    <div class="ch"><div class="ct2">Fleet Location - Ontario, Canada</div><div style="font-size:12px;color:var(--mu)">Green=Moving  Blue=Parked  Purple=EV  Red=Fault</div></div>
+    <div id="map"></div>
+  </div>
+</div>
+<div id="page-fleet" class="page">
+  <div class="grid g2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="ch"><div class="ct2">All Vehicles</div><input id="fsearch" placeholder="Search..." style="background:var(--sf2);border:1px solid var(--br);color:var(--tx);padding:4px 10px;border-radius:6px;font-size:12px;width:140px"></div>
+      <div id="flist" style="max-height:500px;overflow-y:auto"></div>
+    </div>
+    <div class="card"><div class="ch"><div class="ct2">Fleet Composition</div></div><div class="cc" style="height:240px"><canvas id="c-ftype"></canvas></div></div>
+  </div>
+</div>
+<div id="page-kpis" class="page">
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="card"><div class="kpi"><div class="kv" id="kv" style="color:var(--ac)">-</div><div class="kl">Total Vehicles</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" id="ks" style="color:var(--gn)">-</div><div class="kl">Avg Safety Score</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" id="kf" style="color:var(--ye)">-</div><div class="kl">Avg Fuel Level</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" id="kfault" style="color:var(--rd)">-</div><div class="kl">Open Faults</div></div></div>
+  </div>
+  <div class="grid g2" style="margin-bottom:16px">
+    <div class="card"><div class="ch"><div class="ct2">Fleet Activity (24h)</div></div><div class="cc" style="height:220px"><canvas id="c-act"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct2">Fuel Distribution</div></div><div class="cc" style="height:220px"><canvas id="c-fdist"></canvas></div></div>
+  </div>
+  <div class="grid g3">
+    <div class="card"><div class="ch"><div class="ct2">Safety Scores</div></div><div class="cc" style="height:180px"><canvas id="c-sdist"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct2">Utilization</div></div><div class="cc" style="height:180px"><canvas id="c-util"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct2">EV vs ICE</div></div><div class="cc" style="height:180px"><canvas id="c-evice"></canvas></div></div>
+  </div>
+</div>
+<div id="page-alerts" class="page">
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--rd)" id="alc">-</div><div class="kl">Critical</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--ye)" id="alw">-</div><div class="kl">Warnings</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--ac)" id="ali">-</div><div class="kl">Informational</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--gn)">7</div><div class="kl">Resolved Today</div></div></div>
+  </div>
+  <div class="card"><div class="ch"><div class="ct2">Active Alerts</div></div><div id="alist"></div></div>
+</div>
+<div id="page-engine" class="page">
+  <div class="card" style="margin-bottom:16px">
+    <div class="ch"><div class="ct2">Engine Health - All Vehicles</div></div>
+    <div style="overflow-x:auto"><table class="dt" id="etab"><thead><tr><th>Vehicle</th><th>Driver</th><th>RPM</th><th>Temp</th><th>Oil kPa</th><th>Fuel %</th><th>Health</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><div class="ch"><div class="ct2">Temperature Distribution</div></div><div class="cc" style="height:200px"><canvas id="c-temp"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct2">RPM Distribution</div></div><div class="cc" style="height:200px"><canvas id="c-rpm"></canvas></div></div>
+  </div>
+</div>
+<div id="page-maint" class="page">
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--rd)" id="mu">-</div><div class="kl">Overdue</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--ye)" id="ms">-</div><div class="kl">Due Within 7 Days</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--gn)" id="mok">-</div><div class="kl">In Good Shape</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--ac)" id="msc">-</div><div class="kl">Avg Health Score</div></div></div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="ch"><div class="ct2">Maintenance Schedule</div></div>
+    <div style="overflow-x:auto"><table class="dt" id="mtab"><thead><tr><th>Vehicle</th><th>Health</th><th>Brakes</th><th>Tires</th><th>Oil (km)</th><th>Filter (km)</th><th>Next Service</th><th>Priority</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><div class="ch"><div class="ct2">Health Distribution</div></div><div class="cc" style="height:200px"><canvas id="c-hdist"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct2">Component Status</div></div><div id="mheat" style="overflow-x:auto;max-height:220px;overflow-y:auto"></div></div>
+  </div>
+</div>
+<div id="page-driver" class="page">
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--gn)" id="davg">-</div><div class="kl">Fleet Avg Safety</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--rd)" id="dharsh">-</div><div class="kl">Harsh Events (24h)</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--ye)" id="dspd">-</div><div class="kl">Speeding Events (24h)</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--mu)" id="didle">-</div><div class="kl">Avg Idle (min)</div></div></div>
+  </div>
+  <div class="grid g21" style="margin-bottom:16px">
+    <div class="card">
+      <div class="ch"><div class="ct2">Driver Safety Leaderboard</div></div>
+      <div style="overflow-x:auto"><table class="dt" id="dtab"><thead><tr><th>Rank</th><th>Driver</th><th>Vehicle</th><th>Score</th><th>Harsh Brake</th><th>Harsh Accel</th><th>Speeding</th><th>Rating</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="card"><div class="ch"><div class="ct2">Safety Scores</div></div><div class="cc" style="height:300px"><canvas id="c-dsaf"></canvas></div></div>
+  </div>
+</div>
+<div id="page-fuel" class="page">
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--ye)" id="favg">-</div><div class="kl">Avg Fuel Level</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--rd)" id="flow">-</div><div class="kl">Low Fuel Alerts</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--pu)" id="fevavg">-</div><div class="kl">EV Avg Battery</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--gn)">8.4 L/100km</div><div class="kl">Avg Consumption</div></div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><div class="ch"><div class="ct2">Fuel Levels - All Vehicles</div></div><div class="cc" style="height:280px"><canvas id="c-flev"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct2">Fuel Trend (24h)</div></div><div class="cc" style="height:280px"><canvas id="c-ftrend"></canvas></div></div>
+  </div>
+</div>
+<div id="page-util" class="page">
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--ac)" id="ur">-</div><div class="kl">Fleet Utilization</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--gn)" id="ua">-</div><div class="kl">Active Now</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--ye)" id="uid">-</div><div class="kl">Idle Now</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--mu)" id="uas">-</div><div class="kl">Fleet Avg Speed</div></div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><div class="ch"><div class="ct2">Hourly Activity (24h)</div></div><div class="cc" style="height:280px"><canvas id="c-uhour"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct2">Per-Vehicle Utilization</div></div><div class="cc" style="height:280px"><canvas id="c-uveh"></canvas></div></div>
+  </div>
+</div>
+<div id="page-routes" class="page">
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--ac)" id="rtrips">-</div><div class="kl">Active Trips</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--gn)" id="rgeo">-</div><div class="kl">Geofence OK</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--rd)">0</div><div class="kl">Geofence Breaches</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--ye)" id="rspd">-</div><div class="kl">Avg Highway Speed</div></div></div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="ch"><div class="ct2">Active Trips</div></div>
+    <div style="overflow-x:auto"><table class="dt" id="rtab"><thead><tr><th>Vehicle</th><th>Driver</th><th>Trip ID</th><th>Speed</th><th>Zone</th><th>Odometer</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="card"><div class="ch"><div class="ct2">Speed by Zone</div></div><div class="cc" style="height:200px"><canvas id="c-szn"></canvas></div></div>
+</div>
+<div id="page-trips" class="page">
+  <div class="card">
+    <div class="ch"><div class="ct2">Recent Trips</div></div>
+    <div style="overflow-x:auto"><table class="dt" id="ttab"><thead><tr><th>Vehicle</th><th>Driver</th><th>Date</th><th>Speed</th><th>Fuel</th><th>Safety</th></tr></thead><tbody></tbody></table></div>
+  </div>
+</div>
+<div id="page-dd" class="page">
+  <div style="margin-bottom:16px">
+    <select id="dds" style="background:var(--sf2);border:1px solid var(--br);color:var(--tx);padding:8px 12px;border-radius:8px;font-size:13px;width:300px"><option value="">Select a vehicle...</option></select>
+  </div>
+  <div id="ddc"><div style="text-align:center;padding:60px;color:var(--mu)">Select a vehicle above</div></div>
+</div>
+<div id="page-trends" class="page">
+  <div class="grid g2" style="margin-bottom:16px">
+    <div class="card"><div class="ch"><div class="ct2">Speed Trend (available days)</div></div><div class="cc" style="height:220px"><canvas id="c-tspd"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct2">Safety Trend</div></div><div class="cc" style="height:220px"><canvas id="c-tsaf"></canvas></div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><div class="ch"><div class="ct2">Fuel Trend</div></div><div class="cc" style="height:220px"><canvas id="c-tful"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct2">Fault Events</div></div><div class="cc" style="height:220px"><canvas id="c-tflt"></canvas></div></div>
+  </div>
+</div>
+<div id="page-ml" class="page">
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--gn)">97.3%</div><div class="kl">Model Accuracy</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--ac)">1.24ms</div><div class="kl">Avg Inference</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--ye)">3</div><div class="kl">Drift Alerts</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--pu)">2.1K/hr</div><div class="kl">Predictions</div></div></div>
+  </div>
+  <div class="card"><div class="ch"><div class="ct2">Active ML Models</div></div>
+    <table class="dt"><thead><tr><th>Model</th><th>Version</th><th>Purpose</th><th>Accuracy</th><th>Status</th></tr></thead>
+    <tbody><tr><td><b>PredictiveMaintenance-v2</b></td><td>2.1.3</td><td>Failure prediction</td><td style="color:var(--gn)">97.3%</td><td><span class="badge bg">Active</span></td></tr>
+    <tr><td><b>DriverRiskScore-v1</b></td><td>1.4.0</td><td>Safety scoring</td><td style="color:var(--gn)">95.7%</td><td><span class="badge bg">Active</span></td></tr>
+    <tr><td><b>RouteOptimizer-v3</b></td><td>3.0.1</td><td>ETA &amp; fuel opt.</td><td style="color:var(--ye)">93.5%</td><td><span class="badge bg">Active</span></td></tr>
+    <tr><td><b>AnomalyDetector-v1</b></td><td>1.1.0</td><td>Sensor anomaly</td><td style="color:var(--ye)">91.2%</td><td><span class="badge by">Retraining</span></td></tr></tbody></table>
+  </div>
+</div>
+<div id="page-dq" class="page">
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--gn)">99.7%</div><div class="kl">Completeness</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--ac)" id="dq-recs">-</div><div class="kl">Total Records</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--ye)">1.2s</div><div class="kl">Avg Latency</div></div></div>
+    <div class="card"><div class="kpi"><div class="kv" style="color:var(--gn)">0.03%</div><div class="kl">DLQ Rate</div></div></div>
+  </div>
+  <div class="card"><div class="ch"><div class="ct2">AWS Pipeline Health</div></div>
+    <table class="dt"><thead><tr><th>Component</th><th>Status</th><th>Metric</th><th>Value</th></tr></thead>
+    <tbody id="piptab"></tbody></table>
+  </div>
+</div>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div id="loader">
+  <p id="lmsg" style="color:#a0c4ff;margin-bottom:12px;font-size:14px;text-align:center"></p>
+  <div id="api-cfg">
+    <h3>&#x1F4E1; Connect to AWS Fleet API</h3>
+    <p>Enter the API Gateway URL from your Terraform output (<code>fleet_api_url</code>).</p>
+    <input id="api-inp" type="text" placeholder="https://xxx.execute-api.ca-central-1.amazonaws.com" value="">
+    <button id="api-btn" onclick="connectAPI()">Connect &amp; Load Data</button>
+    <p style="margin-top:10px;font-size:11px;text-align:center">You can also pass <code>?api=https://...</code> in the URL</p>
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+let API_URL = '';
+let DATA = null;
+let FL, AGG, KPI;
+let lmap = null, CR = {}, INI = new Set();
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const apiParam = params.get('api');
+  const stored = localStorage.getItem('iap_api_url');
+
+  if (apiParam) {
+    document.getElementById('api-inp').value = apiParam;
+    connectAPI();
+  } else if (stored) {
+    document.getElementById('api-inp').value = stored;
+    connectAPI();
+  } else if (document.getElementById('api-inp').value) {
+    connectAPI();
+  }
+  // else: show the config dialog
+});
+
+function connectAPI() {
+  const raw = document.getElementById('api-inp').value.trim().replace(/\/$/, '');
+  if (!raw) { toast('Enter an API URL first'); return; }
+  API_URL = raw;
+  localStorage.setItem('iap_api_url', API_URL);
+  showLoader('Connecting to AWS...');
+  loadData();
+}
+
+// ── Data loading ─────────────────────────────────────────────────────────────
+async function loadData() {
+  showLoader('Loading fleet data from S3 cache...');
+  try {
+    const r = await fetch(`${API_URL}/data`);
+    if (!r.ok) {
+      if (r.status === 404) {
+        showLoader('No cache yet. Running Athena queries (first run)...');
+        return refreshData();
+      }
+      throw new Error(`HTTP ${r.status}`);
+    }
+    DATA = await r.json();
+    FL  = DATA.fleet_latest;
+    AGG = DATA.hourly_agg;
+    KPI = DATA.kpis;
+    hideLoader();
+    initDashboard();
+    document.getElementById('cache-ts').textContent = DATA.cache_updated_at
+      ? 'Cache: ' + new Date(DATA.cache_updated_at).toLocaleTimeString()
+      : '';
+    document.getElementById('tbt2').textContent = new Date(DATA.cache_updated_at || Date.now())
+      .toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  } catch(e) {
+    hideLoader();
+    showError(`Failed to load data: ${e.message}`);
+  }
+}
+
+async function refreshData() {
+  showLoader('Running Athena queries... (10-30s)');
+  try {
+    const r = await fetch(`${API_URL}/refresh`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+    DATA = await r.json();
+    FL  = DATA.fleet_latest;
+    AGG = DATA.hourly_agg;
+    KPI = DATA.kpis;
+    INI.clear(); // force re-render all pages
+    lmap = null;
+    hideLoader();
+    initDashboard();
+    toast(`Refreshed from Athena in ${DATA.query_time_s}s`);
+  } catch(e) {
+    hideLoader();
+    showError(`Refresh failed: ${e.message}`);
+  }
+}
+
+function showLoader(msg) {
+  document.getElementById('lmsg').textContent = msg;
+  document.getElementById('api-cfg').style.display = 'none';
+  // show spinner
+  const ld = document.getElementById('loader');
+  ld.classList.remove('hidden');
+  let spin = ld.querySelector('.spin');
+  if (!spin) {
+    spin = document.createElement('div');
+    spin.className = 'spin';
+    ld.insertBefore(spin, document.getElementById('lmsg'));
+  }
+}
+
+function hideLoader() {
+  document.getElementById('loader').classList.add('hidden');
+}
+
+function showError(msg) {
+  document.getElementById('api-cfg').style.display = 'block';
+  document.getElementById('loader').classList.remove('hidden');
+  document.getElementById('loader').querySelector('.spin')?.remove();
+  document.getElementById('lmsg').textContent = '⚠ ' + msg;
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const isEV  = v => v.engine.battery_soc_pct !== null;
+const fc    = (p,ev) => ev?'#a371f7':p<20?'#f85149':p<40?'#d29922':'#3fb950';
+const hc    = s => s>75?'#3fb950':s>50?'#d29922':'#f85149';
+const bdg   = (t,c) => `<span class="badge b${c}">${t}</span>`;
+const pb    = (p,color,w=80) => `<div class="pb" style="width:${w}px"><div class="pf" style="width:${Math.min(100,p)}%;background:${color}"></div></div>`;
+const N     = n => (n==null)?'-':Math.round(n);
+const NF    = (n,d=1) => (n==null)?'-':Number(n).toFixed(d);
+const fT    = ts => { try{return new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}catch(e){return ts;} };
+const TI    = t => ({'Van':'&#x1F690;','Truck':'&#x1F69B;','Pickup':'&#x1F6FB;','EV Van':'&#x26A1;&#x1F690;','EV Pickup':'&#x26A1;&#x1F6FB;'})[t]||'&#x1F697;';
+const toast = m => { const t=document.getElementById('toast');t.textContent=m;t.style.opacity=1;setTimeout(()=>t.style.opacity=0,2500); };
+const RNG   = (a,b) => Math.floor(Math.random()*(b-a)+a);
+const SB    = v => v&&v!=='false'&&v!==false;
+
+function mkC(id,type,data,opts={}){
+  const el=document.getElementById(id); if(!el)return;
+  if(CR[id])CR[id].destroy();
+  CR[id]=new Chart(el,{type,data,options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:'#8b949e',font:{size:11}},...(opts.legend||{})}},
+    scales:type==='bar'||type==='line'?{
+      x:{ticks:{color:'#8b949e',font:{size:10}},grid:{color:'#21262d'},...(opts.xS||{})},
+      y:{ticks:{color:'#8b949e',font:{size:10}},grid:{color:'#21262d'},...(opts.yS||{})}
+    }:{},...opts}});
+}
+
+// ── Top bar ───────────────────────────────────────────────────────────────────
+function initTopbar() {
+  document.getElementById('tba').textContent = KPI.active_vehicles;
+  document.getElementById('tbt').textContent = KPI.total_vehicles;
+  document.getElementById('abn').textContent = KPI.total_active_faults + FL.filter(v=>v.fuel.fuel_level<20).length;
+}
+
+// ── Dashboard init (called after data loads) ──────────────────────────────────
+function initDashboard() {
+  initTopbar();
+  P('map');
+}
+
+// ── Page: Map ─────────────────────────────────────────────────────────────────
+function initMap() {
+  document.getElementById('ma').textContent = KPI.active_vehicles;
+  document.getElementById('mi').textContent = KPI.idle_vehicles;
+  document.getElementById('mev').textContent = KPI.ev_vehicles;
+  document.getElementById('mf').textContent = KPI.total_active_faults;
+  if (lmap) { lmap.invalidateSize(); return; }
+  lmap = L.map('map').setView([44.5,-78.5],7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(lmap);
+  FL.forEach(v => {
+    const ev=isEV(v), mov=v.speed_kmh>0, fault=v.fault_codes&&v.fault_codes.length>0;
+    const color=fault?'#f85149':ev?'#a371f7':mov?'#3fb950':'#8b949e';
+    const icon=L.divIcon({html:`<div style="background:${color};width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.8);box-shadow:0 0 6px ${color}"></div>`,className:'',iconSize:[14,14],iconAnchor:[7,7]});
+    const loc=v.location||{};
+    if(!loc.lat) return;
+    L.marker([loc.lat,loc.lng],{icon}).addTo(lmap)
+     .bindPopup(`<b>${v.vehicle_id} - ${v.vehicle_info?.make||''} ${v.vehicle_info?.model||''}</b><br>Driver: ${v.driver_name}<br>Speed: ${N(v.speed_kmh)} km/h<br>${ev?'Battery':'Fuel'}: ${N(v.fuel?.level_pct||v.fuel?.fuel_level||0)}%<br>Zone: ${v.geofence||'-'}`);
+  });
+}
+
+// ── Page: Fleet ───────────────────────────────────────────────────────────────
+function initFleet() {
+  const rFL = f => {
+    const c = document.getElementById('flist'); c.innerHTML='';
+    FL.filter(v => !f || v.vehicle_id.toLowerCase().includes(f) || (v.driver_name||'').toLowerCase().includes(f)).forEach(v => {
+      const ev=isEV(v), mov=v.speed_kmh>0, fuel=v.fuel?.level_pct||v.fuel?.fuel_level||0, col=fc(fuel,ev);
+      c.innerHTML+=`<div class="vc" onclick="drillDown('${v.vehicle_id}')"><div class="va" style="background:${ev?'rgba(163,113,247,.15)':'rgba(88,166,255,.15)'}">${TI(v.vehicle_info?.type||'')}</div><div class="vi"><h4>${v.vehicle_id} - ${v.vehicle_info?.make||''} ${v.vehicle_info?.model||''}</h4><p>${v.driver_name||'-'}</p></div><div class="vs">${bdg(mov?'Moving':'Parked',mov?'g':'b')}<div style="margin-top:4px">${pb(fuel,col)}</div></div></div>`;
+    });
+  };
+  rFL('');
+  document.getElementById('fsearch').oninput=e=>rFL(e.target.value.toLowerCase());
+  const types={};FL.forEach(v=>{const t=v.vehicle_info?.type||'Unknown';types[t]=(types[t]||0)+1;});
+  mkC('c-ftype','doughnut',{labels:Object.keys(types),datasets:[{data:Object.values(types),backgroundColor:['#58a6ff','#3fb950','#d29922','#f85149','#a371f7','#39d353'],borderWidth:0}]},{legend:{position:'right'}});
+}
+
+// ── Page: KPIs ────────────────────────────────────────────────────────────────
+function initKPIs() {
+  document.getElementById('kv').textContent=KPI.total_vehicles;
+  document.getElementById('ks').textContent=KPI.avg_safety_score;
+  document.getElementById('kf').textContent=(KPI.avg_fuel_level||0)+'%';
+  document.getElementById('kfault').textContent=KPI.total_active_faults;
+  const vids=Object.keys(AGG), hrs=AGG[vids[0]]?.map(h=>h.hour?.slice(-5)||h.hour)||[];
+  mkC('c-act','line',{labels:hrs,datasets:[{label:'Active Vehicles',data:hrs.map((_,i)=>Object.values(AGG).filter(v=>v[i]?.avg_speed>5).length),borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,.1)',fill:true,tension:.4,pointRadius:2}]});
+  const fb=[0,0,0,0];FL.forEach(v=>{const f=v.fuel?.level_pct||v.fuel?.fuel_level||0;if(f<20)fb[0]++;else if(f<40)fb[1]++;else if(f<70)fb[2]++;else fb[3]++;});
+  mkC('c-fdist','bar',{labels:['Critical<20%','Low 20-40%','Good 40-70%','Full>70%'],datasets:[{data:fb,backgroundColor:['#f85149','#d29922','#3fb950','#58a6ff'],borderWidth:0}]});
+  const sb=[0,0,0,0];FL.forEach(v=>{const s=v.driver_behavior?.safety_score||85;if(s<70)sb[0]++;else if(s<85)sb[1]++;else if(s<95)sb[2]++;else sb[3]++;});
+  mkC('c-sdist','doughnut',{labels:['Poor<70','Fair 70-85','Good 85-95','Excellent>95'],datasets:[{data:sb,backgroundColor:['#f85149','#d29922','#3fb950','#58a6ff'],borderWidth:0}]});
+  mkC('c-util','doughnut',{labels:['Active','Idle'],datasets:[{data:[KPI.active_vehicles,KPI.idle_vehicles],backgroundColor:['#3fb950','#30363d'],borderWidth:0}]});
+  mkC('c-evice','doughnut',{labels:['EV','ICE'],datasets:[{data:[KPI.ev_vehicles,KPI.total_vehicles-KPI.ev_vehicles],backgroundColor:['#a371f7','#58a6ff'],borderWidth:0}]});
+}
+
+// ── Page: Alerts ──────────────────────────────────────────────────────────────
+function initAlerts() {
+  const as=[];
+  FL.forEach(v=>{
+    (v.fault_codes||[]).forEach(f=>as.push({type:f.severity==='critical'?'critical':'warning',icon:'!',title:`${f.code} - ${f.description}`,body:`${v.vehicle_id} - ${v.driver_name}`,time:'-'}));
+    const fuel=v.fuel?.level_pct||v.fuel?.fuel_level||0;
+    if(fuel<15&&!isEV(v))as.push({type:'warning',icon:'F',title:`Low Fuel - ${v.vehicle_id}`,body:`${N(fuel)}% - ${v.driver_name}`,time:'Now'});
+    if(SB(v.driver_behavior?.speeding))as.push({type:'warning',icon:'S',title:`Speeding - ${v.vehicle_id}`,body:`${N(v.speed_kmh)} km/h`,time:'Now'});
+  });
+  as.push({type:'info',icon:'i',title:'Athena cache available',body:`Last refresh: ${DATA.cache_updated_at||'-'}`,time:'System'});
+  as.sort((a,b)=>a.type==='critical'?-1:1);
+  document.getElementById('alc').textContent=as.filter(a=>a.type==='critical').length;
+  document.getElementById('alw').textContent=as.filter(a=>a.type==='warning').length;
+  document.getElementById('ali').textContent=as.filter(a=>a.type==='info').length;
+  document.getElementById('alist').innerHTML=as.map(a=>`<div class="ai ${a.type}"><div class="aico">[${a.icon}]</div><div class="ab"><h4>${a.title}</h4><p>${a.body}</p></div><div class="at">${a.time}</div></div>`).join('');
+}
+
+// ── Page: Engine ──────────────────────────────────────────────────────────────
+function initEngine() {
+  const tb=document.querySelector('#etab tbody');tb.innerHTML='';
+  FL.forEach(v=>{
+    const ev=isEV(v),hs=v.predictive_maintenance?.overall_health_score||80;
+    const fuel=v.fuel?.level_pct||v.fuel?.fuel_level||0;
+    const sb=hs>75?bdg('Good','g'):hs>50?bdg('Warn','y'):bdg('Crit','r2');
+    tb.innerHTML+=`<tr><td><b>${v.vehicle_id}</b><br><small style="color:var(--mu)">${v.vehicle_info?.make||''} ${v.vehicle_info?.model||''}</small></td><td>${v.driver_name||'-'}</td><td>${ev?'-':N(v.engine?.rpm)}</td><td>${ev?NF(v.engine?.motor_temp_c)+'C(mot)':NF(v.engine?.temperature_c)+'C'}</td><td>${ev?'-':N(v.engine?.oil_pressure_kpa)}</td><td style="color:${fc(fuel,ev)}">${N(fuel)}%</td><td><div style="display:flex;align-items:center;gap:6px">${pb(hs,hc(hs),60)}<span style="font-size:12px">${N(hs)}</span></div></td><td>${sb}</td></tr>`;
+  });
+  const ice=FL.filter(v=>!isEV(v));
+  const tb2=[0,0,0,0];ice.forEach(v=>{const t=v.engine?.temperature_c||90;if(t<85)tb2[0]++;else if(t<92)tb2[1]++;else if(t<100)tb2[2]++;else tb2[3]++;});
+  mkC('c-temp','bar',{labels:['<85C','85-92','92-100','>100'],datasets:[{data:tb2,backgroundColor:['#58a6ff','#3fb950','#d29922','#f85149'],borderWidth:0}]});
+  const rb=[0,0,0,0,0];ice.forEach(v=>{const r=v.engine?.rpm||1000;if(r<800)rb[0]++;else if(r<1500)rb[1]++;else if(r<2500)rb[2]++;else if(r<3500)rb[3]++;else rb[4]++;});
+  mkC('c-rpm','bar',{labels:['<800','800-1500','1500-2500','2500-3500','>3500'],datasets:[{data:rb,backgroundColor:['#8b949e','#3fb950','#58a6ff','#d29922','#f85149'],borderWidth:0}]});
+}
+
+// ── Page: Maint ───────────────────────────────────────────────────────────────
+function initMaint() {
+  let urg=0,sn=0,ok=0,ts=0;
+  FL.forEach(v=>{const m=v.predictive_maintenance||{};const d=m.next_service_days??30;if(d<=0)urg++;else if(d<=7)sn++;else ok++;ts+=(m.overall_health_score||80);});
+  document.getElementById('mu').textContent=urg;document.getElementById('ms').textContent=sn;
+  document.getElementById('mok').textContent=ok;document.getElementById('msc').textContent=(ts/FL.length).toFixed(1);
+  const tb=document.querySelector('#mtab tbody');tb.innerHTML='';
+  [...FL].sort((a,b)=>(a.predictive_maintenance?.overall_health_score||80)-(b.predictive_maintenance?.overall_health_score||80)).forEach(v=>{
+    const m=v.predictive_maintenance||{},pri=m.next_service_days<=0?bdg('URGENT','r2'):m.next_service_days<=7?bdg('Soon','y'):bdg('OK','g'),hs=m.overall_health_score||80;
+    tb.innerHTML+=`<tr><td><b>${v.vehicle_id}</b></td><td>${pb(hs,hc(hs),60)} ${N(hs)}</td><td style="color:${hc(m.brake_health||80)}">${N(m.brake_health||80)}%</td><td style="color:${hc(m.tire_health||80)}">${N(m.tire_health||80)}%</td><td>${N(m.oil_change_due_km||5000)}</td><td>${N(m.filter_due_km||8000)}</td><td>${m.next_service_days<=0?'OVERDUE':(m.next_service_days||30)+' days'}</td><td>${pri}</td></tr>`;
+  });
+  const sc=[0,0,0,0];FL.forEach(v=>{const s=v.predictive_maintenance?.overall_health_score||80;if(s<50)sc[0]++;else if(s<70)sc[1]++;else if(s<85)sc[2]++;else sc[3]++;});
+  mkC('c-hdist','bar',{labels:['<50','50-70','70-85','>85'],datasets:[{data:sc,backgroundColor:['#f85149','#d29922','#3fb950','#58a6ff'],borderWidth:0}]});
+  document.getElementById('mheat').innerHTML=`<table class="dt"><thead><tr><th>Vehicle</th><th>Brakes</th><th>Tires</th><th>Oil Due</th></tr></thead><tbody>${FL.slice(0,12).map(v=>{const m=v.predictive_maintenance||{};return`<tr><td>${v.vehicle_id}</td><td style="color:${hc(m.brake_health||80)}">${N(m.brake_health||80)}%</td><td style="color:${hc(m.tire_health||80)}">${N(m.tire_health||80)}%</td><td>${N(m.oil_change_due_km||5000)} km</td></tr>`;}).join('')}</tbody></table>`;
+}
+
+// ── Page: Driver ──────────────────────────────────────────────────────────────
+function initDriver() {
+  const all=Object.values(AGG).flat();
+  document.getElementById('davg').textContent=(FL.reduce((s,v)=>s+(v.driver_behavior?.safety_score||85),0)/FL.length).toFixed(1);
+  document.getElementById('dharsh').textContent=all.reduce((s,h)=>s+(h.harsh_brakes||0)+(h.harsh_accels||0),0);
+  document.getElementById('dspd').textContent=all.reduce((s,h)=>s+(h.speeding_events||0),0);
+  document.getElementById('didle').textContent=Math.round(FL.reduce((s,v)=>s+(v.driver_behavior?.idle_time_s||0),0)/FL.length/60);
+  const srt=[...FL].sort((a,b)=>(b.driver_behavior?.safety_score||85)-(a.driver_behavior?.safety_score||85));
+  document.querySelector('#dtab tbody').innerHTML=srt.map((v,i)=>{
+    const s=v.driver_behavior?.safety_score||85,va=AGG[v.vehicle_id]||[];
+    const hb=va.reduce((a,h)=>a+(h.harsh_brakes||0),0),ha=va.reduce((a,h)=>a+(h.harsh_accels||0),0),sp=va.reduce((a,h)=>a+(h.speeding_events||0),0);
+    return`<tr><td>#${i+1}</td><td><b>${v.driver_name||'-'}</b></td><td>${v.vehicle_id}</td><td style="color:${hc(s)};font-weight:700">${N(s)}</td><td style="color:${hb>5?'#f85149':'#3fb950'}">${hb}</td><td style="color:${ha>5?'#f85149':'#3fb950'}">${ha}</td><td style="color:${sp>10?'#f85149':'#3fb950'}">${sp}</td><td>${s>95?bdg('Excellent','g'):s>85?bdg('Good','b'):s>70?bdg('Fair','y'):bdg('Poor','r2')}</td></tr>`;
+  }).join('');
+  mkC('c-dsaf','bar',{labels:srt.map(v=>v.vehicle_id),datasets:[{label:'Safety Score',data:srt.map(v=>v.driver_behavior?.safety_score||85),backgroundColor:srt.map(v=>hc(v.driver_behavior?.safety_score||85)),borderWidth:0}]},{yS:{min:60,max:100}});
+}
+
+// ── Page: Fuel ────────────────────────────────────────────────────────────────
+function initFuel() {
+  const evs=FL.filter(isEV);
+  document.getElementById('favg').textContent=(KPI.avg_fuel_level||0)+'%';
+  document.getElementById('flow').textContent=FL.filter(v=>(v.fuel?.level_pct||v.fuel?.fuel_level||100)<20&&!isEV(v)).length;
+  document.getElementById('fevavg').textContent=evs.length?(evs.reduce((s,v)=>s+(v.engine?.battery_soc_pct||0),0)/evs.length).toFixed(1)+'%':'-';
+  const srt=[...FL].sort((a,b)=>(a.fuel?.level_pct||a.fuel?.fuel_level||50)-(b.fuel?.level_pct||b.fuel?.fuel_level||50));
+  mkC('c-flev','bar',{labels:srt.map(v=>v.vehicle_id),datasets:[{label:'Fuel/Battery %',data:srt.map(v=>v.fuel?.level_pct||v.fuel?.fuel_level||50),backgroundColor:srt.map(v=>fc(v.fuel?.level_pct||50,isEV(v))),borderWidth:0}]},{yS:{min:0,max:100}});
+  const vids=Object.keys(AGG),hrs=AGG[vids[0]]?.map(h=>h.hour?.slice(-5)||h.hour)||[];
+  const avgF=hrs.map((_,i)=>{const vs=Object.values(AGG).map(v=>v[i]?.fuel_level).filter(x=>x!=null);return vs.length?vs.reduce((a,b)=>a+b)/vs.length:null;});
+  mkC('c-ftrend','line',{labels:hrs,datasets:[{label:'Avg Fuel %',data:avgF,borderColor:'#d29922',backgroundColor:'rgba(210,153,34,.1)',fill:true,tension:.4,pointRadius:2}]},{yS:{min:0,max:100}});
+}
+
+// ── Page: Utilization ─────────────────────────────────────────────────────────
+function initUtil() {
+  document.getElementById('ur').textContent=((KPI.active_vehicles/KPI.total_vehicles)*100).toFixed(0)+'%';
+  document.getElementById('ua').textContent=KPI.active_vehicles;document.getElementById('uid').textContent=KPI.idle_vehicles;
+  document.getElementById('uas').textContent=(FL.reduce((s,v)=>s+(v.speed_kmh||0),0)/FL.length).toFixed(1)+' km/h';
+  const vids=Object.keys(AGG),hrs=AGG[vids[0]]?.map(h=>h.hour?.slice(-5)||h.hour)||[];
+  mkC('c-uhour','bar',{labels:hrs,datasets:[{label:'Active Vehicles',data:hrs.map((_,i)=>Object.values(AGG).filter(v=>v[i]?.avg_speed>5).length),backgroundColor:'rgba(88,166,255,.7)',borderWidth:0}]},{yS:{min:0,max:KPI.total_vehicles}});
+  const vu=FL.map(v=>{const ha=(AGG[v.vehicle_id]||[]).filter(h=>h.avg_speed>5).length;return{id:v.vehicle_id,p:Math.round(ha/Math.max(1,(AGG[v.vehicle_id]||[1]).length)*100)};}).sort((a,b)=>b.p-a.p);
+  mkC('c-uveh','bar',{labels:vu.map(v=>v.id),datasets:[{label:'Utilization %',data:vu.map(v=>v.p),backgroundColor:vu.map(v=>v.p>70?'#3fb950':v.p>40?'#58a6ff':'#d29922'),borderWidth:0}]},{yS:{min:0,max:100}});
+}
+
+// ── Page: Routes ──────────────────────────────────────────────────────────────
+function initRoutes() {
+  const active=FL.filter(v=>v.trip_id&&v.speed_kmh>0);
+  document.getElementById('rtrips').textContent=active.length;document.getElementById('rgeo').textContent=FL.length;
+  const hw=FL.filter(v=>(v.geofence||'').includes('highway')&&v.speed_kmh>0);
+  document.getElementById('rspd').textContent=hw.length?(hw.reduce((s,v)=>s+v.speed_kmh,0)/hw.length).toFixed(0)+' km/h':'-';
+  document.querySelector('#rtab tbody').innerHTML=FL.map(v=>`<tr><td><b>${v.vehicle_id}</b></td><td>${v.driver_name||'-'}</td><td style="font-size:11px;color:var(--mu)">${v.trip_id||'-'}</td><td>${N(v.speed_kmh)} km/h</td><td>${v.geofence||'-'}</td><td>${N(v.odometer_km||0).toLocaleString()} km</td><td>${bdg(v.speed_kmh>0?'Moving':'Parked',v.speed_kmh>0?'g':'b')}</td></tr>`).join('');
+  const zones={};FL.forEach(v=>{const g=v.geofence||'unknown';if(!zones[g])zones[g]=[];zones[g].push(v.speed_kmh||0);});
+  const tz=Object.entries(zones).sort((a,b)=>b[1].length-a[1].length).slice(0,6);
+  mkC('c-szn','bar',{labels:tz.map(([z])=>z.replace('zone-','')),datasets:[{label:'Avg Speed km/h',data:tz.map(([,s])=>s.reduce((a,b)=>a+b)/s.length),backgroundColor:'rgba(88,166,255,.7)',borderWidth:0}]});
+}
+
+// ── Page: Trips ───────────────────────────────────────────────────────────────
+function initTrips() {
+  document.querySelector('#ttab tbody').innerHTML=FL.map(v=>`<tr><td>${v.vehicle_id}</td><td>${v.driver_name||'-'}</td><td>${(v.timestamp||'').slice(0,10)}</td><td>${N(v.speed_kmh)} km/h</td><td>${N(v.fuel?.level_pct||v.fuel?.fuel_level||0)}%</td><td style="color:${hc(v.driver_behavior?.safety_score||85)}">${N(v.driver_behavior?.safety_score||85)}</td></tr>`).join('');
+}
+
+// ── Page: Drill-Down ──────────────────────────────────────────────────────────
+function drillDown(vid) { P('dd'); document.getElementById('dds').value=vid; renderDD(vid); }
+function initDD() {
+  const sel=document.getElementById('dds');FL.forEach(v=>{const o=document.createElement('option');o.value=v.vehicle_id;o.textContent=`${v.vehicle_id} - ${v.vehicle_info?.make||''} ${v.vehicle_info?.model||''}`;sel.appendChild(o);});
+  sel.onchange=e=>renderDD(e.target.value);
+}
+function renderDD(vid) {
+  const v=FL.find(x=>x.vehicle_id===vid);
+  if(!v){document.getElementById('ddc').innerHTML='<div style="text-align:center;padding:60px;color:var(--mu)">Select a vehicle</div>';return;}
+  const ev=isEV(v),m=v.predictive_maintenance||{},db=v.driver_behavior||{},fuel=v.fuel?.level_pct||v.fuel?.fuel_level||50;
+  document.getElementById('ddc').innerHTML=`<div class="grid g4" style="margin-bottom:16px">
+    <div class="card"><div class="kpi"><div class="ki">${TI(v.vehicle_info?.type||'')}</div><div class="kv" style="font-size:18px">${v.vehicle_info?.make||''} ${v.vehicle_info?.model||''}</div><div class="kl">${v.vehicle_info?.year||''} - ${v.vehicle_info?.type||''}</div></div></div>
+    <div class="card"><div class="kpi"><div class="ki">&#x1F464;</div><div class="kv" style="font-size:18px">${v.driver_name||'-'}</div><div class="kl">${v.driver_id||'-'}</div><div style="margin-top:8px">${bdg('Safety: '+N(db.safety_score||85),(db.safety_score||85)>85?'g':'y')}</div></div></div>
+    <div class="card"><div class="kpi"><div class="ki">${ev?'&#x26A1;':'&#x26FD;'}</div><div class="kv" style="color:${fc(fuel,ev)};font-size:28px">${N(fuel)}%</div><div class="kl">${ev?'Battery SOC':'Fuel Level'}</div></div></div>
+    <div class="card"><div class="kpi"><div class="ki">&#x1F6E0;</div><div class="kv" style="color:${hc(m.overall_health_score||80)};font-size:28px">${N(m.overall_health_score||80)}</div><div class="kl">Overall Health</div></div></div>
+  </div>
+  <div class="grid g3" style="margin-bottom:16px">
+    <div class="card"><div class="ch"><div class="ct2">Powertrain</div></div>
+      ${ev?`<div class="mr"><div class="ml2">Battery SOC</div><div class="mv" style="color:var(--pu)">${N(v.engine?.battery_soc_pct)}%</div></div>
+      <div class="mr"><div class="ml2">Motor Temp</div><div class="mv">${NF(v.engine?.motor_temp_c)}C</div></div>
+      <div class="mr"><div class="ml2">Power Draw</div><div class="mv">${NF(v.engine?.power_draw_kw)} kW</div></div>`
+      :`<div class="mr"><div class="ml2">RPM</div><div class="mv">${N(v.engine?.rpm)}</div></div>
+      <div class="mr"><div class="ml2">Engine Temp</div><div class="mv">${NF(v.engine?.temperature_c)}C</div></div>
+      <div class="mr"><div class="ml2">Oil Pressure</div><div class="mv">${N(v.engine?.oil_pressure_kpa)} kPa</div></div>
+      <div class="mr"><div class="ml2">Coolant</div><div class="mv">${NF(v.engine?.coolant_temp_c)}C</div></div>`}
+    </div>
+    <div class="card"><div class="ch"><div class="ct2">Maintenance</div></div>
+      <div class="mr"><div class="ml2">Brake Health</div><div class="mv" style="color:${hc(m.brake_health||80)}">${N(m.brake_health||80)}%</div></div>
+      <div class="mr"><div class="ml2">Tire Health</div><div class="mv" style="color:${hc(m.tire_health||80)}">${N(m.tire_health||80)}%</div></div>
+      <div class="mr"><div class="ml2">Oil Due</div><div class="mv">${N(m.oil_change_due_km||5000)} km</div></div>
+      <div class="mr"><div class="ml2">Next Service</div><div class="mv" style="color:${(m.next_service_days||30)<=7?'#f85149':'#e6edf3'}">${m.next_service_days<=0?'OVERDUE':(m.next_service_days||30)+' days'}</div></div>
+    </div>
+    <div class="card"><div class="ch"><div class="ct2">Driver</div></div>
+      <div class="mr"><div class="ml2">Safety Score</div><div class="mv" style="color:${hc(db.safety_score||85)};font-weight:700">${N(db.safety_score||85)}/100</div></div>
+      <div class="mr"><div class="ml2">Speed</div><div class="mv">${N(v.speed_kmh)} km/h</div></div>
+      <div class="mr"><div class="ml2">Speeding</div><div class="mv" style="color:${SB(db.speeding)?'#f85149':'#3fb950'}">${SB(db.speeding)?'YES':'No'}</div></div>
+      <div class="mr"><div class="ml2">Seatbelt</div><div class="mv" style="color:${SB(db.seatbelt_on)?'#3fb950':'#f85149'}">${SB(db.seatbelt_on)?'On':'OFF'}</div></div>
+    </div>
+  </div>
+  <div class="card"><div class="ch"><div class="ct2">Speed Trend (24h)</div></div><div class="cc" style="height:180px"><canvas id="c-ddspd"></canvas></div></div>`;
+  const va=AGG[vid]||[];
+  setTimeout(()=>mkC('c-ddspd','line',{labels:va.map(h=>h.hour?.slice(-5)||h.hour),datasets:[{label:'Avg Speed km/h',data:va.map(h=>h.avg_speed||0),borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,.1)',fill:true,tension:.4,pointRadius:1}]}),50);
+}
+
+// ── Page: Trends ──────────────────────────────────────────────────────────────
+function initTrends() {
+  const bd={};Object.values(AGG).forEach(vH=>vH.forEach(h=>{const d=(h.hour||'').slice(0,10);if(!d)return;if(!bd[d])bd[d]={sp:[],sa:[],fu:[],ft:0};bd[d].sp.push(h.avg_speed||0);bd[d].sa.push(h.avg_safety_score||85);bd[d].fu.push(h.fuel_level||50);bd[d].ft+=(h.fault_events||0);}));
+  const days=Object.keys(bd).sort(),avg=k=>days.map(d=>{const a=bd[d][k];return a.length?a.reduce((s,v)=>s+v)/a.length:null;});
+  mkC('c-tspd','line',{labels:days,datasets:[{label:'Avg Speed km/h',data:avg('sp'),borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,.1)',fill:true,tension:.4}]});
+  mkC('c-tsaf','line',{labels:days,datasets:[{label:'Avg Safety Score',data:avg('sa'),borderColor:'#3fb950',backgroundColor:'rgba(63,185,80,.1)',fill:true,tension:.4}]},{yS:{min:80,max:100}});
+  mkC('c-tful','line',{labels:days,datasets:[{label:'Avg Fuel %',data:avg('fu'),borderColor:'#d29922',backgroundColor:'rgba(210,153,34,.1)',fill:true,tension:.4}]});
+  mkC('c-tflt','bar',{labels:days,datasets:[{label:'Fault Events',data:days.map(d=>bd[d].ft),backgroundColor:'rgba(248,81,73,.7)',borderWidth:0}]});
+}
+
+// ── Page: DQ ─────────────────────────────────────────────────────────────────
+function initDQ() {
+  const total=Object.values(AGG).flat().reduce((s,h)=>s+(h.records||0),0);
+  document.getElementById('dq-recs').textContent=total.toLocaleString();
+  document.getElementById('piptab').innerHTML=[
+    {c:'S3 Lake Bucket',m:'Objects / Partitions',v:`${FL.length} vehicles`},
+    {c:'Athena Workgroup',m:'Cache age',v:DATA.cache_updated_at?new Date(DATA.cache_updated_at).toLocaleTimeString():'-'},
+    {c:'Lambda Function',m:'Query time',v:(DATA.query_time_s||'-')+'s'},
+    {c:'Glue Catalog',m:'Database',v:DATA.athena_db||'iap-dev-fleet'},
+    {c:'API Gateway',m:'Endpoint',v:API_URL.split('//')[1]||'-'},
+  ].map(r=>`<tr><td>${r.c}</td><td>${bdg('Healthy','g')}</td><td style="color:var(--mu)">${r.m}</td><td><b>${r.v}</b></td></tr>`).join('');
+}
+
+// ── Page router ───────────────────────────────────────────────────────────────
+const PINIT={map:initMap,fleet:initFleet,kpis:initKPIs,alerts:initAlerts,engine:initEngine,maint:initMaint,dd:initDD,driver:initDriver,fuel:initFuel,util:initUtil,routes:initRoutes,trips:initTrips,trends:initTrends,dq:initDQ};
+const PTITLE={map:'Live Fleet Map',fleet:'Fleet Overview',kpis:'KPI Dashboard',alerts:'Alerts & Incidents',engine:'Engine & Health',maint:'Predictive Maintenance',dd:'Vehicle Drill-Down',driver:'Driver Safety & Behaviour',fuel:'Fuel & Energy Efficiency',util:'Vehicle Utilization',routes:'Route / Geofence Analytics',trips:'Trip History',trends:'Historical Trends',ml:'ML Monitoring',dq:'Data Quality & Platform Health'};
+function P(id){
+  if(!DATA)return;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  const pg=document.getElementById('page-'+id);if(pg)pg.classList.add('active');
+  document.querySelectorAll('.ni').forEach(n=>{if(n.getAttribute('onclick')===`P('${id}')`)n.classList.add('active');});
+  document.getElementById('pt').textContent=PTITLE[id]||id;
+  if(!INI.has(id)&&PINIT[id]){PINIT[id]();INI.add(id);}
+}
+</script>
+</body>
+</html>
