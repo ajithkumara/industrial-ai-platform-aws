@@ -1,0 +1,59 @@
+@import url("https://rsms.me/inter/inter.css");
+@import "leaflet/dist/leaflet.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 214 55% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 214 55% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 214 55% 14%;
+    --primary: 213 62% 18%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 90% 50%;
+    --secondary-foreground: 0 0% 100%;
+    --brand: 172 66% 40%;
+    --brand-foreground: 0 0% 100%;
+    --accent: 214 32% 94%;
+    --accent-foreground: 214 55% 14%;
+    --muted: 214 24% 95%;
+    --muted-foreground: 215 14% 45%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 60% 38%;
+    --success-foreground: 0 0% 100%;
+    --warning: 36 92% 48%;
+    --warning-foreground: 0 0% 100%;
+    --border: 214 24% 89%;
+    --input: 214 24% 86%;
+    --ring: 215 90% 50%;
+    --radius: 0.5rem;
+    --sidebar: 213 62% 12%;
+    --sidebar-foreground: 214 30% 86%;
+    --sidebar-muted: 214 20% 60%;
+    --sidebar-active: 213 50% 22%;
+    --sidebar-border: 213 40% 20%;
+  }
+  * { @apply border-border; }
+  html { font-feature-settings: "cv11", "ss01", "tnum"; }
+  body { @apply bg-background text-foreground antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { @apply rounded-full bg-slate-300/70 border-[3px] border-solid border-transparent bg-clip-padding; }
+}
+
+@layer utilities {
+  .tabular { font-variant-numeric: tabular-nums; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+}
+
+.leaflet-container { font: inherit; }
+.leaflet-container .leaflet-control-attribution { font-size: 10px; background: rgb(255 255 255 / .8); }
+.fp-marker { background: transparent; border: 0; }
+.leaflet-popup-content-wrapper { @apply rounded-lg shadow-pop; }
+.leaflet-popup-content { margin: 10px 12px; font-size: 12px; }
+.recharts-cartesian-axis-tick text { fill: hsl(var(--muted-foreground)); font-size: 11px; }
+.recharts-default-tooltip { @apply !rounded-md !border !border-border !shadow-pop; font-size: 12px; }

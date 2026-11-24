@@ -1,10 +1,20 @@
 variable "name_prefix" { type = string }
 variable "environment" { type = string }
 variable "kinesis_stream_name" { type = string }
-variable "log_kms_key_arn" { type = string }
+variable "region" {
+  type        = string
+  description = "AWS region for dashboard widgets."
+  default     = "ca-central-1"
+}
+variable "log_kms_key_arn" {
+  type        = string
+  default     = null
+  description = "KMS key ARN for log group encryption. Null = AWS-managed (free, dev-safe)."
+}
 variable "sns_kms_key_id" {
   type        = string
-  description = "KMS key id/alias for SNS topic encryption."
+  default     = null
+  description = "KMS key id/alias for SNS topic encryption. Null = no encryption (dev-safe)."
 }
 variable "alarm_email" {
   type        = string

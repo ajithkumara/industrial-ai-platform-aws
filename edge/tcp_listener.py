@@ -183,17 +183,40 @@ def _parse_packet(raw: str) -> Optional[dict]:
 # ── Kinesis sender ────────────────────────────────────────────────────────────
 
 class _ProducerWrapper:
-    """Thin wrapper so dry-run mode works without boto3 / Kinesis available."""
+    """
+    Event sink — writes to S3 directly (when S3_BUCKET is set),
+    Kinesis (when S3_BUCKET is not set and KINESIS_DRY_RUN=0),
+    or stdout (DRY RUN).
+
+    Priority: S3_BUCKET > Kinesis > dry-run stdout
+    """
 
     def __init__(self) -> None:
-        if DRY_RUN:
-            log.info("DRY RUN mode — events will be printed, not sent to Kinesis.")
+        import os as _os
+        self._s3_mode = bool(_os.environ.get("S3_BUCKET"))
+
+        if self._s3_mode:
+            from edge.s3_writer import write_event as _s3_write, flush as _s3_flush  # type: ignore
+            self._s3_write = _s3_write
+            self._s3_flush = _s3_flush
+            self._producer = None
+            log.info("S3 direct mode — events will be written to s3://%s",
+                     _os.environ.get("S3_BUCKET"))
+        elif DRY_RUN:
+            log.info("DRY RUN mode — events will be printed, not sent.")
             self._producer = None
         else:
             from edge.base_producer import KinesisProducer  # type: ignore
             self._producer = KinesisProducer()
+            log.info("Kinesis mode — events will be sent to Kinesis stream.")
 
     def send(self, event: dict) -> None:
+        if self._s3_mode:
+            try:
+                self._s3_write(event)
+            except Exception as exc:
+                log.error("S3 write failed: %s", exc)
+            return
         if DRY_RUN or self._producer is None:
             log.info("DRY RUN event: %s", json.dumps(event, indent=2))
             return

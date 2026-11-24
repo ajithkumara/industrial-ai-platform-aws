@@ -5,11 +5,11 @@ output "s3_bucket" {
 
 output "kinesis_stream_name" {
   description = "Kinesis stream name. Set KINESIS_STREAM_NAME=<this>."
-  value       = aws_kinesis_stream.telemetry.name
+  value       = one(aws_kinesis_stream.telemetry[*].name)
 }
 
 output "kinesis_stream_arn" {
-  value = aws_kinesis_stream.telemetry.arn
+  value = one(aws_kinesis_stream.telemetry[*].arn)
 }
 
 output "dynamodb_checkpoint_table" {
@@ -37,23 +37,23 @@ output "aws_region" {
 }
 
 output "cost_reminder" {
-  description = "Cost reminder — do not leave Kinesis running."
-  value       = "REMINDER: Kinesis costs $0.015/shard-hr. Run `terraform destroy` after testing."
+  description = "Cost reminder."
+  value       = "REMINDER: edge server (t4g.nano + public IPv4) ~ $8/month running, ~ $4.50/month stopped (IPv4 + EBS). Stop instance when not testing: aws ec2 stop-instances --instance-ids $(terraform output -raw edge_server_instance_id)"
 }
 
 output "cloudwatch_dashboard_url" {
   description = "CloudWatch pipeline dashboard URL."
-  value       = module.monitoring.dashboard_url
+  value       = one(module.monitoring[*].dashboard_url)
 }
 
 output "alarm_topic_arn" {
   description = "SNS topic ARN for pipeline alarms."
-  value       = module.monitoring.alarm_topic_arn
+  value       = one(module.monitoring[*].alarm_topic_arn)
 }
 
 output "log_group_name" {
   description = "CloudWatch log group for the consumer."
-  value       = module.monitoring.log_group_name
+  value       = one(module.monitoring[*].log_group_name)
 }
 
 # ── Athena ──────────────────────────────────────────────────────────────────
@@ -91,4 +91,43 @@ output "fleet_api_refresh_endpoint" {
 output "fleet_lambda_name" {
   description = "Lambda function name for the fleet API."
   value       = module.fleet_api.lambda_function_name
+}
+
+# ── Edge Server ───────────────────────────────────────────────────────────────
+
+output "edge_server_public_ip" {
+  description = "Elastic IP — enter this as Server in Mictrack Config Tool (Port 5013)"
+  value       = module.edge_server.public_ip
+}
+
+output "edge_tcp_endpoint" {
+  description = "Full TCP endpoint for device config: <IP>:5013"
+  value       = module.edge_server.tcp_endpoint
+}
+
+output "edge_server_instance_id" {
+  description = "EC2 instance ID (use to stop/start without destroying)"
+  value       = module.edge_server.instance_id
+}
+
+# ── MP91 tracking dashboard ─────────────────────────────────────────────────
+output "tracking_dashboard_url" {
+  value = module.mp91_tracking.dashboard_url
+}
+
+output "tracking_api_url" {
+  value = module.mp91_tracking.api_url
+}
+
+output "tracking_fleet_table" {
+  description = "Fleet DynamoDB table (the edge server writes live positions to it; set as FLEET_TABLE in /opt/iap-edge/.env)"
+  value       = module.mp91_tracking.fleet_table
+}
+
+output "tracking_dns_records_for_ionos" {
+  value = module.mp91_tracking.dns_records_for_ionos
+}
+
+output "tracking_email_dns_records_for_ionos" {
+  value = module.mp91_tracking.email_dns_records_for_ionos
 }

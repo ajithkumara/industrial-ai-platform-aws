@@ -36,3 +36,8 @@ data/*.json
 
 # Lambda build artefacts
 terraform/modules/fleet_api/fleet_api_lambda.zip
+
+# MP91 real-vehicle data (contains home/parking locations) — keep local
+data/mp91_samples/
+dashboard/mp91_dashboard.html
+terraform/modules/mp91_tracking/mp91_lambda.zip

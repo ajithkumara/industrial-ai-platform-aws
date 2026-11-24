@@ -82,3 +82,134 @@ resource "aws_cloudwatch_metric_alarm" "dlq_volume" {
   treat_missing_data  = "notBreaching"
   tags                = var.tags
 }
+
+# ---------------------------------------------------------------------------
+# CloudWatch Dashboard — pipeline at a glance
+# ---------------------------------------------------------------------------
+resource "aws_cloudwatch_dashboard" "pipeline" {
+  dashboard_name = "${var.name_prefix}-pipeline"
+
+  dashboard_body = jsonencode({
+    widgets = [
+      {
+        type   = "metric"
+        x      = 0
+        y      = 0
+        width  = 8
+        height = 6
+        properties = {
+          title       = "Kinesis - Incoming Records"
+          view        = "timeSeries"
+          stat        = "Sum"
+          period      = 60
+          region      = var.region
+          metrics     = [["AWS/Kinesis", "IncomingRecords", "StreamName", var.kinesis_stream_name]]
+          annotations = { horizontal = [] }
+          yAxis       = { left = { min = 0 } }
+        }
+      },
+      {
+        type   = "metric"
+        x      = 8
+        y      = 0
+        width  = 8
+        height = 6
+        properties = {
+          title       = "Kinesis - Incoming Bytes"
+          view        = "timeSeries"
+          stat        = "Sum"
+          period      = 60
+          region      = var.region
+          metrics     = [["AWS/Kinesis", "IncomingBytes", "StreamName", var.kinesis_stream_name]]
+          annotations = { horizontal = [] }
+          yAxis       = { left = { min = 0 } }
+        }
+      },
+      {
+        type   = "metric"
+        x      = 16
+        y      = 0
+        width  = 8
+        height = 6
+        properties = {
+          title       = "Kinesis - Put Success Rate"
+          view        = "timeSeries"
+          stat        = "Average"
+          period      = 60
+          region      = var.region
+          metrics     = [["AWS/Kinesis", "PutRecord.Success", "StreamName", var.kinesis_stream_name]]
+          annotations = { horizontal = [] }
+          yAxis       = { left = { min = 0, max = 1 } }
+        }
+      },
+      {
+        type   = "metric"
+        x      = 0
+        y      = 6
+        width  = 12
+        height = 6
+        properties = {
+          title   = "Consumer - Iterator Age (ms)"
+          view    = "timeSeries"
+          stat    = "Maximum"
+          period  = 60
+          region  = var.region
+          metrics = [["AWS/Kinesis", "GetRecords.IteratorAgeMilliseconds", "StreamName", var.kinesis_stream_name]]
+          annotations = {
+            horizontal = [{ label = "Lag alert (60s)", value = 60000, color = "#ff6961" }]
+          }
+          yAxis = { left = { min = 0 } }
+        }
+      },
+      {
+        type   = "metric"
+        x      = 12
+        y      = 6
+        width  = 12
+        height = 6
+        properties = {
+          title       = "Consumer - GetRecords Success Rate"
+          view        = "timeSeries"
+          stat        = "Average"
+          period      = 60
+          region      = var.region
+          metrics     = [["AWS/Kinesis", "GetRecords.Success", "StreamName", var.kinesis_stream_name]]
+          annotations = { horizontal = [] }
+          yAxis       = { left = { min = 0, max = 1 } }
+        }
+      },
+      {
+        type   = "metric"
+        x      = 0
+        y      = 12
+        width  = 12
+        height = 6
+        properties = {
+          title       = "DLQ Records (schema failures)"
+          view        = "timeSeries"
+          stat        = "Sum"
+          period      = 300
+          region      = var.region
+          metrics     = [["IndustrialAI", "DLQRecords", "Environment", var.environment]]
+          annotations = { horizontal = [] }
+          yAxis       = { left = { min = 0 } }
+        }
+      },
+      {
+        type   = "alarm"
+        x      = 12
+        y      = 12
+        width  = 12
+        height = 6
+        properties = {
+          title  = "Active Alarms"
+          alarms = [
+            aws_cloudwatch_metric_alarm.consumer_lag.arn,
+            aws_cloudwatch_metric_alarm.no_incoming_records.arn,
+            aws_cloudwatch_metric_alarm.dlq_volume.arn,
+          ]
+        }
+      },
+    ]
+  })
+}

@@ -11,6 +11,11 @@
 
 locals {
   prefix = "${var.project_prefix}-${var.environment}"
+
+  # Kinesis name/ARN are constructed (not read from the resource) so IAM
+  # policies stay valid whether or not the stream exists (enable_kinesis).
+  kinesis_stream_name = "${local.prefix}-telemetryhub"
+  kinesis_stream_arn  = "arn:aws:kinesis:${var.aws_region}:${data.aws_caller_identity.current.account_id}:stream/${local.prefix}-telemetryhub"
 }
 
 # ---------------------------------------------------------------------------
@@ -86,8 +91,11 @@ resource "aws_s3_bucket_policy" "lake_tls" {
 # 24h retention (default) to avoid the $0.023/shard-hr extended-retention fee.
 # Use the full dev env (168h) when you need replay across days.
 # ---------------------------------------------------------------------------
+# COST: 1 provisioned shard ~ $12/month even when idle. Off by default;
+# set enable_kinesis = true only while running the streaming demo.
 resource "aws_kinesis_stream" "telemetry" {
-  name             = "${local.prefix}-telemetryhub"
+  count            = var.enable_kinesis ? 1 : 0
+  name             = local.kinesis_stream_name
   shard_count      = 1
   retention_period = 24 # hours — free tier; 168h costs extra
 
@@ -161,7 +169,7 @@ data "aws_iam_policy_document" "consumer_policy" {
       "kinesis:ListShards",
       "kinesis:ListStreams",
     ]
-    resources = [aws_kinesis_stream.telemetry.arn]
+    resources = [local.kinesis_stream_arn]
   }
 
   # Kinesis KMS — decrypt records
@@ -245,7 +253,7 @@ data "aws_iam_policy_document" "producer_policy" {
       "kinesis:DescribeStream",
       "kinesis:DescribeStreamSummary",
     ]
-    resources = [aws_kinesis_stream.telemetry.arn]
+    resources = [local.kinesis_stream_arn]
   }
 
   statement {
@@ -273,12 +281,15 @@ resource "aws_iam_role_policy" "producer" {
 # ---------------------------------------------------------------------------
 # CloudWatch — dashboards, alarms, SNS alerting
 # ---------------------------------------------------------------------------
+# Gated with Kinesis: its alarms watch Kinesis metrics, and the
+# no-incoming-records alarm treats missing data as breaching (would spam).
 module "monitoring" {
+  count  = var.enable_kinesis ? 1 : 0
   source = "../../modules/cloudwatch"
 
   name_prefix         = local.prefix
   environment         = var.environment
-  kinesis_stream_name = aws_kinesis_stream.telemetry.name
+  kinesis_stream_name = local.kinesis_stream_name
   alarm_email         = "aakumara@gmail.com"
 
   # Stage 1: no CMK — use AWS-managed keys (free)
@@ -430,4 +441,100 @@ module "fleet_api" {
   }
 
   depends_on = [module.athena]
+}
+
+# ── Edge Server (EC2 t3.micro — MP91 TCP listener) ───────────────────────────
+#
+# Uses the default VPC / public subnets that exist in every AWS account.
+# No new VPC needed for dev. Elastic IP gives a stable public IP that
+# won't change when the instance is stopped or restarted.
+#
+# COST WARNING: ~$8.50 USD/month (t3.micro) while running.
+#               Stop with: aws ec2 stop-instances --instance-ids <id>
+#               Destroy with: terraform destroy -target=module.edge_server
+
+data "aws_vpc" "default" {
+  default = true
+}
+
+data "aws_subnets" "default_public" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+  filter {
+    name   = "map-public-ip-on-launch"
+    values = ["true"]
+  }
+}
+
+module "edge_server" {
+  source = "../../modules/edge_server"
+
+  name_prefix     = local.prefix
+  region          = data.aws_region.current.name
+  vpc_id          = data.aws_vpc.default.id
+  subnet_id       = tolist(data.aws_subnets.default_public.ids)[0]
+  lake_bucket     = aws_s3_bucket.lake.id
+  lake_bucket_arn = aws_s3_bucket.lake.arn
+
+  # SSH disabled by default — open only if you need to debug the instance.
+  # To enable: set ssh_allowed_cidrs = ["<your-ip>/32"] and key_pair_name
+  ssh_allowed_cidrs = []
+  key_pair_name     = ""
+
+  # Edge alarm notifications (recover/reboot events). Set alarm_email in terraform.tfvars.
+  alarm_email = var.alarm_email
+
+  tags = {
+    Project     = "industrial-ai-platform"
+    Environment = "dev-stage1"
+    ManagedBy   = "terraform"
+    CostStage   = "stage1-ephemeral"
+  }
+}
+
+# ── MP91 tracking dashboard (login + live data) ──────────────────────────────
+# Hot path: the edge server may read the "someone is watching" flag and write the latest live position,
+# only for DEVICE#* items in the fleet table. No other table access. Attached in place: no instance change.
+resource "aws_iam_role_policy" "edge_live" {
+  name = "${local.prefix}-edge-live-position"
+  role = module.edge_server.role_name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Action    = ["dynamodb:GetItem", "dynamodb:PutItem"]
+      Resource  = module.mp91_tracking.fleet_table_arn
+      Condition = { "ForAllValues:StringLike" = { "dynamodb:LeadingKeys" = ["DEVICE#*"] } }
+    }]
+  })
+}
+
+module "mp91_tracking" {
+  source = "../../modules/mp91_tracking"
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  name_prefix         = local.prefix
+  region              = data.aws_region.current.name
+  lake_bucket         = aws_s3_bucket.lake.id
+  lake_bucket_arn     = aws_s3_bucket.lake.arn
+  admin_email         = var.tracking_admin_email
+  custom_domain       = var.tracking_domain
+  custom_domain_ready = var.tracking_domain_ready
+  use_fleetpilot_web  = var.use_fleetpilot_web
+
+  # Alert email (SES). Blank domain = off. Recipients listed here get an AWS verification email (sandbox).
+  email_domain          = var.alert_email_domain
+  email_test_recipients = var.alert_email_test_recipients
+
+  tags = {
+    Project     = "industrial-ai-platform"
+    Environment = "dev-stage1"
+    ManagedBy   = "terraform"
+    CostStage   = "stage1-ephemeral"
+  }
 }
